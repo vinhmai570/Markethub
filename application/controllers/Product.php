@@ -1,11 +1,14 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
-class Product extends CI_Controller {
+use chriskacerguis\RestServer\RestController;
 
+class Product extends RestController {
+    
     function __construct()
     {
         parent::__construct();
+        $this->load->model('Product_model');
     }
 
     public function index()
@@ -13,38 +16,55 @@ class Product extends CI_Controller {
         
     }
     
-    // get all products
-    public function getProducts()
+    /**
+    * get all product
+    * 
+    * @echo response json all product
+    */
+    public function getProducts_get()
     {
-        $this->load->model('Product_model');
         $products = $this->Product_model->getProducts();
-        echo json_encode($products);
+        if($products) {
+            $this->response($products, 200);
+        } 
+    }
+
+    /**
+    * get product by ID
+    * 
+    * @param - product_id
+    * @echo response json product
+    */
+    public function id_get($id)
+    {
+        $productByID = $this->Product_model->getProductByID($id);
+        $this->response($productByID,200);
     }
 
      /**
     * Insert product from Client
     * 
-    * @echo json message
+    * @echo json message: success/error
     */
-    public function insertProduct()
+    public function insertProduct_post()
     {
-        $dataInput=json_decode(file_get_contents('php://input'),true);
-		$name = isset($dataInput['productName'])?$this->filterInput($dataInput['productName']):'';
-		$price = isset($dataInput['price'])?$dataInput['price']:'';
-		$categoryID = isset($dataInput['category'])?$this->filterInput($dataInput['category'],"INT"):'';
-        $shortDescription = isset($dataInput['shortDescription'])?$this->filterInput($dataInput['shortDescription']):'';
-        $longDescription = isset($dataInput['longDescription'])?$this->filterInput($dataInput['longDescription']):'';
-        $discount = isset($dataInput['discount'])?$dataInput['discount']:0;
-        $listImage = isset($dataInput['listImage'])?$this->filterInput($dataInput['listImage']):'';
-        $avatar = isset($dataInput['avatar'])?$dataInput['avatar']:'';
-        $quantity= isset($dataInput['quantity'])?$dataInput['quantity']:'';
+        $name = $this->post('productName');
+		$price = $this->post('price');
+		$categoryID = $this->post('category');
+        $shortDescription = $this->post('shortDescription');
+        $longDescription = $this->post('longDescription');
+        $discount = $this->post('discount');
+        $listImage = $this->post('listImage');
+        $avatar = $this->post('avatar');
+        $quantity= $this->post('quantity');
+        $userID= $this->post('userID');
         $totalLike = 0;
         $totalView = 1;
         $rate = 5 ;
         $status = 0;
-        $createDate = $updateDate=date("Y-m-d h:i:sa");
+        $createDate = $updateDate= date("Y-m-d h:i:sa");
         
-        if ($name!='' && $price!='' && $categoryID!='' && $shortDescription !='' && $longDescription!='' && $quantity!='' && $avatar !='') {
+        if ($name!='' && $price!='' && $categoryID!='' && $shortDescription !='' && $longDescription!='' && $quantity!='' && $avatar !='' && $userID!='') {
             $product = array(
                 'product_name'=> $name,
                 'price' => $price,
@@ -59,60 +79,143 @@ class Product extends CI_Controller {
                 'total_view' => $totalView,
                 'rate' => $rate,
                 'status' => $status,
+                'user_id' => $userID,
                 'create_date' => $createDate,
                 'update_date' => $createDate 
             );
-            $this->load->model('Product_model');
             if ($this->Product_model->insertProduct($product)) {
                 $message = array(
                     'status' => true,
-                    'message' => 'Insert Successful!'
+                    'message' => 'Success'
                 );
-                echo json_encode($message);
+                $this->response($message,200);
             } else{
                 $message = array(
                     'status' => false,
-                    'message' => 'ERROR'
+                    'message' => 'Error'
                 );
-                echo json_encode($message);
+                $this->response($message,404);
             }
         } else  {
             $message = array(
                 'status' => false,
-                'message' => 'ERROR'
+                'message' => 'Vui lòng nhập đầy đủ thông tin!'
             );
-            echo json_encode($message);
+            $this->response($message,400);
         }
 		
     }
     
     /**
-    * Filter input from client
+    * update view in product
     * 
-    * @input input from client
-    * @type type input, default string
-    * @return $input type
+    * 
+    * @echo message: true/false
     */
-    public function filterInput( $input, $type = NULL)
+    public function updateViewProduct_put()
     {
-        $input = trim($input);
-        $input = filter_var($input, FILTER_SANITIZE_STRING);
-        if ($type=='INT') {
-            //Không phải là số nguyên thì return chuỗi trống
-            if (filter_var($input, FILTER_VALIDATE_INT) === false){
-                return '';
+        $productID= $this->put('productID');
+        if ($productID!='') {
+            if ($this->Product_model->updateViewProduct($productID)) {
+                $message = array(
+                    'status' => true,
+                    'message' => 'Update Successful!'
+                );
+                $this->response($message,200);
+            } else {
+                $message = array(
+                    'status' => false,
+                    'message' => 'Update ERROR!'
+                );
+                $this->response($message,400);
             }
+        } else {
+            $message = array(
+                'status' => false,
+                'message' => 'Update ERROR, not paramater!'
+            );
+            $this->response($message,400);
         }
-        if ($type=='URL') {
-            //URL không hợp lệ thì return chuỗi trống
-            if (filter_var($url, FILTER_VALIDATE_URL) === false) {
-                return '';
-            }
-        }
-        return $input;
+        
     }
-    
 
+    /**
+    * update product
+    * 
+    * @echo message: true/false
+    */
+    public function updateProduct_put()
+    {   
+        $id = $this->put('id');
+        $name = $this->put('name');
+        $price = $this->put('price');
+        $category = $this->put('category');
+        $shortDescription = $this->put('shortDescription');
+        $longDescription = $this->put('longDescription');
+        $discount = $this->put('discount');
+        $listImage = $this->put('listImage');
+        $avatar = $this->put('avatar');
+        $quantity = $this->put('quantity');
+        $createDate = $updateDate= date("Y-m-d h:i:sa");
+        
+        if ($id!='' && $name!='' && $price!='' && $category!='' && $shortDescription !='' && $longDescription!='' && $quantity!='' && $avatar !='' && $discount!='') {
+            $product = array(
+                'product_name'=> $name,
+                'price' => $price,
+                'category_id' => $category,
+                'short_description' => $shortDescription,
+                'long_description' => $longDescription,
+                'discount' => $discount,
+                'list_image' => $listImage,
+                'avatar' => $avatar,
+                'quantity' => $quantity,
+                'create_date' => $createDate,
+                'update_date' => $createDate 
+            );
+            if ($this->Product_model->updateProduct($product, $id)) {
+                $message = array(
+                    'status' => true,
+                    'message' => 'Success'
+                );
+                $this->response($message,200);
+            } else{
+                $message = array(
+                    'status' => false,
+                    'message' => 'Error'
+                );
+                $this->response($message,404);
+            }
+        } else  {
+            $message = array(
+                'status' => false,
+                'message' => 'Vui lòng nhập đầy đủ thông tin!'
+            );
+            $this->response($message,400);
+        }
+    }
+
+    /**
+    * delete product by ID
+    * 
+    * @echo message: true/false
+    */
+    public function delete_delete($id)
+    {
+       if ($this->Product_model->deleteProduct($id)) {
+            $message = array(
+                'status' => true,
+                'message' => 'Success'
+            );
+            $this->response($message,200);
+        } else  {
+            $message = array(
+                'status' => false,
+                'message' => 'Error'
+            );
+            $this->response($message,400);
+        }
+    }
+   
 }
 
 /* End of file Controllername.php */

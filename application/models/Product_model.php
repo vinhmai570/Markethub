@@ -13,8 +13,11 @@ class Product_model extends CI_Model {
     {
         $this->db->select('*');
         $products = $this->db->get('product');
-        $products = $products->result_array();
-        return $products;
+        if ($products->num_rows() > 0) {
+            return $products->result_array();
+        } else {
+            return 0;
+        }
     }
 
     public function insertProduct($product)
@@ -23,6 +26,43 @@ class Product_model extends CI_Model {
         return $this->db->insert_id();
     }
 
+    public function getProductByID($id)
+    {
+        $this->db->select('product_name, price, category_id, short_description, long_description, discount, list_image, product.avatar, total_like, total_view, rate, user.user_name, update_date ');
+        $this->db->from('product');
+        $this->db->where('status', 1);
+        $this->db->where('product_id',$id);
+        $this->db->join('user', 'user.user_id = product.user_id');
+        $productByID = $this->db->get();
+        $productByID = $productByID->result_array();
+        return $productByID;
+    }
+
+    public function updateViewProduct($productID)
+    {
+        $this->db->select('total_view');
+        $this->db->where('product_id', $productID);
+        $total_view = $this->db->get('product');
+        $total_view = $total_view->result_array();
+        $total_view = $total_view[0]['total_view']+1;
+        $data = array(
+            'total_view' => $total_view
+        );
+        $this->db->where('product_id', $productID);
+        return $this->db->update('product',$data);
+    }
+
+    public function updateProduct($product, $id)
+    {
+        $this->db->where('product_id', $id);
+        return $this->db->update('product',$product);
+    }
+
+    public function deleteProduct($id)
+    {
+        $this->db->where('product_id',$id);
+        return $this->db->delete('product');
+    }
 }
 
 /* End of file ModelName.php */
