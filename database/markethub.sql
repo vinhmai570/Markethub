@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Máy chủ: 127.0.0.1
--- Thời gian đã tạo: Th9 19, 2020 lúc 11:13 AM
+-- Thời gian đã tạo: Th9 20, 2020 lúc 11:44 AM
 -- Phiên bản máy phục vụ: 10.4.14-MariaDB
 -- Phiên bản PHP: 7.4.10
 
@@ -29,7 +29,8 @@ SET time_zone = "+00:00";
 
 CREATE TABLE `category` (
   `category_id` int(11) NOT NULL,
-  `category_name` varchar(255) COLLATE utf8_unicode_ci NOT NULL
+  `category_name` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
+  `category_level_1` text COLLATE utf8_unicode_ci DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- --------------------------------------------------------
@@ -99,9 +100,14 @@ CREATE TABLE `product` (
 --
 
 INSERT INTO `product` (`product_id`, `product_name`, `price`, `category_id`, `short_description`, `long_description`, `discount`, `list_image`, `avatar`, `quantity`, `total_like`, `total_view`, `rate`, `status`, `user_id`, `create_date`, `update_date`) VALUES
-(16, '1', 100, 1, '1', 'cacban', 2, NULL, 'avatar', 3, 4, 7, 6, 7, 1, '2020-09-18 04:02:35', '2020-09-18 04:02:35'),
-(22, 'vinh', 100, 1, 'hello', 'cacban', 2, 'url', 'avatar', 3, 0, 1, 1, 1, 1, '2020-09-19 06:12:26', '2020-09-19 06:12:26'),
-(23, 'f', 123, 1, 'hello ', 'world', 0, NULL, '', 0, NULL, NULL, NULL, 0, 3, '0000-00-00 00:00:00', '0000-00-00 00:00:00');
+(23, 'f', 123, 1, 'hello ', 'world', 0, NULL, '', 0, NULL, NULL, NULL, 1, 3, '0000-00-00 00:00:00', '0000-00-00 00:00:00'),
+(25, 'vinh', 100, 1, 'hello', 'cacban', 2, 'url', 'avatar', 3, 0, 1, 5, 1, 1, '2020-09-20 06:16:37', '2020-09-20 06:16:37'),
+(26, 'vinh', 100, 1, 'hello', 'cacban', 2, 'url', 'avatar', 3, 0, 1, 5, 0, 1, '2020-09-20 06:39:23', '2020-09-20 06:39:23'),
+(27, 'vinh', 100, 1, 'hello', 'cacban', 2, 'url', 'avatar', 3, 0, 1, 5, 0, 1, '2020-09-20 10:05:24', '2020-09-20 10:05:24'),
+(28, 'vinh', 100, 1, 'hello', 'cacban', 2, 'url', 'avatar', 3, 0, 1, 5, 0, 1, '2020-09-20 10:07:39', '2020-09-20 10:07:39'),
+(29, 'vinh', 100, 1, 'hello', 'cacban', 2, 'url', 'avatar', 3, 0, 1, 5, 0, 1, '2020-09-20 10:15:14', '2020-09-20 10:15:14'),
+(30, 'vinh', 100, 1, 'hello', 'cacban', 2, 'url', 'avatar', 3, 0, 1, 5, 0, 1, '2020-09-20 10:15:31', '2020-09-20 10:15:31'),
+(31, 'vinh', 100, 1, 'hello', 'cacban', 2, 'url', 'avatar', 3, 0, 1, 5, 0, 1, '2020-09-20 10:18:05', '2020-09-20 10:18:05');
 
 -- --------------------------------------------------------
 
@@ -150,7 +156,8 @@ ALTER TABLE `group_user`
 -- Chỉ mục cho bảng `order`
 --
 ALTER TABLE `order`
-  ADD PRIMARY KEY (`order_id`);
+  ADD PRIMARY KEY (`order_id`),
+  ADD KEY `fk_order_user_id` (`user_id`);
 
 --
 -- Chỉ mục cho bảng `product`
@@ -164,7 +171,8 @@ ALTER TABLE `product`
 --
 ALTER TABLE `user`
   ADD PRIMARY KEY (`user_id`),
-  ADD UNIQUE KEY `email` (`email`);
+  ADD UNIQUE KEY `email` (`email`),
+  ADD KEY `fk_user_group_id` (`group_id`);
 
 --
 -- AUTO_INCREMENT cho các bảng đã đổ
@@ -192,7 +200,7 @@ ALTER TABLE `order`
 -- AUTO_INCREMENT cho bảng `product`
 --
 ALTER TABLE `product`
-  MODIFY `product_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=24;
+  MODIFY `product_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=32;
 
 --
 -- AUTO_INCREMENT cho bảng `user`
@@ -205,10 +213,22 @@ ALTER TABLE `user`
 --
 
 --
+-- Các ràng buộc cho bảng `order`
+--
+ALTER TABLE `order`
+  ADD CONSTRAINT `fk_order_user_id` FOREIGN KEY (`user_id`) REFERENCES `user` (`user_id`);
+
+--
 -- Các ràng buộc cho bảng `product`
 --
 ALTER TABLE `product`
   ADD CONSTRAINT `fk_product` FOREIGN KEY (`user_id`) REFERENCES `user` (`user_id`);
+
+--
+-- Các ràng buộc cho bảng `user`
+--
+ALTER TABLE `user`
+  ADD CONSTRAINT `fk_user_group_id` FOREIGN KEY (`group_id`) REFERENCES `group_user` (`group_id`);
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
