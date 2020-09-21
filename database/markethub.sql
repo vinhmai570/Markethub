@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Máy chủ: 127.0.0.1
--- Thời gian đã tạo: Th9 20, 2020 lúc 11:44 AM
+-- Thời gian đã tạo: Th9 21, 2020 lúc 05:17 PM
 -- Phiên bản máy phục vụ: 10.4.14-MariaDB
 -- Phiên bản PHP: 7.4.10
 
@@ -32,6 +32,15 @@ CREATE TABLE `category` (
   `category_name` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
   `category_level_1` text COLLATE utf8_unicode_ci DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+--
+-- Đang đổ dữ liệu cho bảng `category`
+--
+
+INSERT INTO `category` (`category_id`, `category_name`, `category_level_1`) VALUES
+(1, 'book', NULL),
+(2, 'table', NULL),
+(3, 'phone', NULL);
 
 -- --------------------------------------------------------
 
@@ -100,14 +109,12 @@ CREATE TABLE `product` (
 --
 
 INSERT INTO `product` (`product_id`, `product_name`, `price`, `category_id`, `short_description`, `long_description`, `discount`, `list_image`, `avatar`, `quantity`, `total_like`, `total_view`, `rate`, `status`, `user_id`, `create_date`, `update_date`) VALUES
-(23, 'f', 123, 1, 'hello ', 'world', 0, NULL, '', 0, NULL, NULL, NULL, 1, 3, '0000-00-00 00:00:00', '0000-00-00 00:00:00'),
-(25, 'vinh', 100, 1, 'hello', 'cacban', 2, 'url', 'avatar', 3, 0, 1, 5, 1, 1, '2020-09-20 06:16:37', '2020-09-20 06:16:37'),
-(26, 'vinh', 100, 1, 'hello', 'cacban', 2, 'url', 'avatar', 3, 0, 1, 5, 0, 1, '2020-09-20 06:39:23', '2020-09-20 06:39:23'),
-(27, 'vinh', 100, 1, 'hello', 'cacban', 2, 'url', 'avatar', 3, 0, 1, 5, 0, 1, '2020-09-20 10:05:24', '2020-09-20 10:05:24'),
-(28, 'vinh', 100, 1, 'hello', 'cacban', 2, 'url', 'avatar', 3, 0, 1, 5, 0, 1, '2020-09-20 10:07:39', '2020-09-20 10:07:39'),
-(29, 'vinh', 100, 1, 'hello', 'cacban', 2, 'url', 'avatar', 3, 0, 1, 5, 0, 1, '2020-09-20 10:15:14', '2020-09-20 10:15:14'),
-(30, 'vinh', 100, 1, 'hello', 'cacban', 2, 'url', 'avatar', 3, 0, 1, 5, 0, 1, '2020-09-20 10:15:31', '2020-09-20 10:15:31'),
-(31, 'vinh', 100, 1, 'hello', 'cacban', 2, 'url', 'avatar', 3, 0, 1, 5, 0, 1, '2020-09-20 10:18:05', '2020-09-20 10:18:05');
+(29, 'vinh', 100, 1, 'hello', 'cacban', 2, 'url', 'avatar', 3, 0, 1, 5, 1, 1, '2020-09-20 10:15:14', '2020-09-20 10:15:14'),
+(30, 'vinh', 100, 1, 'hello', 'cacban', 2, 'url', 'avatar', 3, 0, 1, 5, 1, 1, '2020-09-20 10:15:31', '2020-09-20 10:15:31'),
+(31, 'vinh', 100, 1, 'hello', '<h1 style=\"color:red\"> hello </h1>', 2, 'url', 'avatar', 3, 0, 1, 5, 0, 1, '2020-09-20 10:18:05', '2020-09-20 10:18:05'),
+(32, 'vinh', 100, 1, 'hello', 'cacban', 2, 'url', 'avatar', 3, 0, 1, 5, 0, 1, '2020-09-21 07:16:43', '2020-09-21 07:16:43'),
+(33, 'vinh1', 100, 3, 'hello', 'cacban', 2, 'url', 'avatar', 3, 0, 1, 5, 1, 5, '2020-09-21 10:28:05', '2020-09-21 09:24:13'),
+(34, 'vinh', 100, 1, 'hello', 'cacban', 2, 'url', 'avatar', 3, 0, 1, 5, 0, 1, '2020-09-21 09:53:00', '2020-09-21 09:53:00');
 
 -- --------------------------------------------------------
 
@@ -134,7 +141,8 @@ CREATE TABLE `user` (
 INSERT INTO `user` (`user_id`, `user_name`, `email`, `phone`, `password`, `address`, `viewed_products`, `group_id`, `avatar`) VALUES
 (1, 'vinh', 'vinhmai570@gmail.com', '0904735110', '4107eaebd361f3477b630f4ed7452418', NULL, NULL, 1, NULL),
 (3, 'thach', 'xxx', '023942034', '4f55d6dea8a3dc91c48ac7a382cb094a', NULL, NULL, 1, NULL),
-(4, 'test', 'test@test.com', '231324323', '098f6bcd4621d373cade4e832627b4f6', NULL, NULL, 3, NULL);
+(4, 'test', 'test@test.com', '231324323', '098f6bcd4621d373cade4e832627b4f6', NULL, NULL, 3, NULL),
+(5, 'editor', 'editor@gmail.com', '0132234232', '5aee9dbd2a188839105073571bee1b1f', NULL, NULL, 2, NULL);
 
 --
 -- Chỉ mục cho các bảng đã đổ
@@ -164,7 +172,8 @@ ALTER TABLE `order`
 --
 ALTER TABLE `product`
   ADD PRIMARY KEY (`product_id`),
-  ADD KEY `fk_product` (`user_id`);
+  ADD KEY `fk_product` (`user_id`),
+  ADD KEY `fk_product_category` (`category_id`);
 
 --
 -- Chỉ mục cho bảng `user`
@@ -172,6 +181,7 @@ ALTER TABLE `product`
 ALTER TABLE `user`
   ADD PRIMARY KEY (`user_id`),
   ADD UNIQUE KEY `email` (`email`),
+  ADD UNIQUE KEY `user_name` (`user_name`),
   ADD KEY `fk_user_group_id` (`group_id`);
 
 --
@@ -182,7 +192,7 @@ ALTER TABLE `user`
 -- AUTO_INCREMENT cho bảng `category`
 --
 ALTER TABLE `category`
-  MODIFY `category_id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `category_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT cho bảng `group_user`
@@ -200,13 +210,13 @@ ALTER TABLE `order`
 -- AUTO_INCREMENT cho bảng `product`
 --
 ALTER TABLE `product`
-  MODIFY `product_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=32;
+  MODIFY `product_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=35;
 
 --
 -- AUTO_INCREMENT cho bảng `user`
 --
 ALTER TABLE `user`
-  MODIFY `user_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `user_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- Các ràng buộc cho các bảng đã đổ
@@ -222,7 +232,8 @@ ALTER TABLE `order`
 -- Các ràng buộc cho bảng `product`
 --
 ALTER TABLE `product`
-  ADD CONSTRAINT `fk_product` FOREIGN KEY (`user_id`) REFERENCES `user` (`user_id`);
+  ADD CONSTRAINT `fk_product` FOREIGN KEY (`user_id`) REFERENCES `user` (`user_id`),
+  ADD CONSTRAINT `fk_product_category` FOREIGN KEY (`category_id`) REFERENCES `category` (`category_id`);
 
 --
 -- Các ràng buộc cho bảng `user`
