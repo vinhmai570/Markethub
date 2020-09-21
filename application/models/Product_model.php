@@ -28,13 +28,12 @@ class Product_model extends CI_Model {
 
     public function getProductByID($id)
     {
-        $this->db->select('product_name, price, category_id, short_description, long_description, discount, list_image, product.avatar, total_like, total_view, rate, user.user_name, update_date ');
+        $this->db->select('product_name, price, category_id, short_description, long_description, discount, list_image, product.avatar, total_like, total_view, rate, user.user_name,user.user_id, update_date ');
         $this->db->from('product');
         $this->db->where('status', 1);
         $this->db->where('product_id',$id);
         $this->db->join('user', 'user.user_id = product.user_id');
-        $productByID = $this->db->get();
-        $productByID = $productByID->result_array();
+        $productByID = $this->db->get()->row();
         return $productByID;
     }
 
@@ -61,7 +60,14 @@ class Product_model extends CI_Model {
     public function deleteProduct($id)
     {
         $this->db->where('product_id',$id);
-        return $this->db->delete('product');
+        $this->db->delete('product');
+        if ($this->db->error()['message']) {
+            return 0; // error
+        } else if (!$this->db->affected_rows()) {
+            return 2; // id not found
+        } else {
+            return 1; // success
+        }
     }
 }
 
