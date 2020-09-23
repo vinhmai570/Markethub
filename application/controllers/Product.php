@@ -21,7 +21,8 @@ class Product extends RestController {
     
     /**
     * get all product
-    * 
+    * method get
+    *
     * @echo response json all product
     */
     public function getProducts_get()
@@ -34,7 +35,7 @@ class Product extends RestController {
 
     /**
     * get product by ID
-    * 
+    *
     * @param - product_id
     * @echo response json product
     */
@@ -44,8 +45,57 @@ class Product extends RestController {
         $this->response($productByID,200);
     }
 
+    /**
+     * get product by category
+     * 
+     * @param - categoryID
+     * 
+     */
+    public function categoryID_get($categoryID)
+    {
+        $productByCategory = $this->Product_model->getProductByCategory($categoryID);
+        $this->response($productByCategory,200);
+    }
+
+    /**
+     * get product by userID
+     * 
+     * @param - userID
+     * 
+     * @echo response json product by user id
+     */
+    public function userID_get($userID)
+    {
+        $productByUser = $this->Product_model->getProductByUser($userID);
+        $this->response($productByUser,200);
+    }
+
+    /**
+     * get product by view sort by max->min
+     * 
+     * @echo response json product
+     */
+    public function getProductByView_get()
+    {
+        $productByView = $this->Product_model->getProductByView();
+        $this->response($productByView,200);
+    }
+
+
+    /**
+     * get product by view sort by max->min
+     * 
+     * @echo response json product
+     */
+    public function getProductByDiscount_get()
+    {
+        $productByDiscount = $this->Product_model->getProductByDiscount();
+        $this->response($productByView,200);
+    }
+
      /**
     * Insert product from Client
+    * Method post
     * 
     * @echo json message: success/error
     */
@@ -132,7 +182,7 @@ class Product extends RestController {
     
     /**
     * update view in product
-    * 
+    * method put
     * 
     * @echo message: true/false
     */
@@ -166,6 +216,7 @@ class Product extends RestController {
     /**
     * update product
     * 
+    * method put 
     * @echo message: true/false
     */
     public function updateProduct_put()
@@ -250,7 +301,8 @@ class Product extends RestController {
 
     /**
     * delete product by ID
-    * 
+    * method delete 
+    *
     * @echo message: true/false
     */
     public function delete_delete($id)
@@ -306,6 +358,67 @@ class Product extends RestController {
             }
         }
        
+    }
+
+    /**
+     * confirm product from editor send
+     * method put
+     * only admin can access
+     * 
+     * @echo message: true/false
+     */
+    public function confirmProduct_put()
+    {
+        $id= $this->put('id');
+        if ($id!='') {
+            $getPermission = $this->auth->checkPermission();
+            if ($getPermission['status'] == true) {                   // admin or editor
+                $checkAuth = false;
+                if ($getPermission['permission'] == 'admin')  {
+                    $checkAuth =true;
+                } 
+                if($checkAuth == true) {                                // confirmed
+                    $checkDelete = $this->Product_model->confirmProduct($id);
+                    if ($checkDelete == 1) {
+                        $message = array(
+                            'status' => true,
+                            'message' => 'Success'
+                        );
+                        $this->response($message,200);
+                    } else if($checkDelete == 0) {
+                        $message = array(
+                            'status' => false,
+                            'message' => 'Error'
+                        );
+                        $this->response($message,400);
+                    } else {
+                        $message = array(
+                            'status' => false,
+                            'message' => 'Product Not found'
+                        );
+                        $this->response($message,404);
+                    }
+                } else {                                 // not access
+                    $message = array(
+                        'status' => false,
+                        'message' => 'Authorization'
+                    );
+                    $this->response($message,404);
+                }
+            } else {                                    // not access
+                $message = array(
+                    'status' => false,
+                    'message' => 'Authorization'
+                );
+                $this->response($message,400);
+            }
+        } else {
+            $message = array(
+                'status' => false,
+                'message' => 'id product not found'
+            );
+            $this->response($message,404);
+        }
     }
    
 }

@@ -53,6 +53,11 @@ class Auth extends RestController {
         }
     }
 
+    /**
+    * Check token expired from header request 
+    * 
+    * @echo message: true/false
+    */
     public function checkToken_post()
     {
         $token = isset($this->input->request_headers('Authorization')['Authorization'])?$this->input->request_headers('Authorization')['Authorization']:0; // get token in header
@@ -82,6 +87,11 @@ class Auth extends RestController {
         }
     }
 
+    /**
+    * Check permission by token from header request
+    * 
+    * @echo message: true/false + permission
+    */
     public function checkPermission()
     {
         $token = isset($this->input->request_headers('Authorization')['Authorization'])?$this->input->request_headers('Authorization')['Authorization']:0; // get token in header
