@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Máy chủ: 127.0.0.1
--- Thời gian đã tạo: Th9 21, 2020 lúc 05:17 PM
+-- Thời gian đã tạo: Th9 24, 2020 lúc 09:09 AM
 -- Phiên bản máy phục vụ: 10.4.14-MariaDB
 -- Phiên bản PHP: 7.4.10
 
@@ -30,14 +30,14 @@ SET time_zone = "+00:00";
 CREATE TABLE `category` (
   `category_id` int(11) NOT NULL,
   `category_name` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
-  `category_level_1` text COLLATE utf8_unicode_ci DEFAULT NULL
+  `category_level_2` text COLLATE utf8_unicode_ci DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 --
 -- Đang đổ dữ liệu cho bảng `category`
 --
 
-INSERT INTO `category` (`category_id`, `category_name`, `category_level_1`) VALUES
+INSERT INTO `category` (`category_id`, `category_name`, `category_level_2`) VALUES
 (1, 'book', NULL),
 (2, 'table', NULL),
 (3, 'phone', NULL);
@@ -78,6 +78,13 @@ CREATE TABLE `order` (
   `order_date` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
+--
+-- Đang đổ dữ liệu cho bảng `order`
+--
+
+INSERT INTO `order` (`order_id`, `user_id`, `total_price`, `quantity`, `product_order`, `status`, `order_date`) VALUES
+(1, 4, 10000, 9, '[\r\n    {\r\n        \"id\":\"29\",\r\n        \"name\":\"vinh\",\r\n        \"price\":100,\r\n        \"avatar\":\"avatar\",\r\n        \"discount\":2,\r\n        \"user_id\":1,\r\n        \"quantity\":3\r\n    },\r\n    {\r\n        \"id\":\"31\",\r\n        \"name\":\"vinh\",\r\n        \"price\":100,\r\n        \"avatar\":\"avatar\",\r\n        \"discount\":2,\r\n        \"user_id\":1,\r\n        \"quantity\":3\r\n    }\r\n]', 1, 0);
+
 -- --------------------------------------------------------
 
 --
@@ -97,6 +104,7 @@ CREATE TABLE `product` (
   `quantity` int(11) NOT NULL,
   `total_like` int(11) DEFAULT NULL,
   `total_view` int(11) DEFAULT NULL,
+  `total_order` int(11) DEFAULT NULL,
   `rate` double DEFAULT NULL,
   `status` int(1) NOT NULL,
   `user_id` int(11) NOT NULL,
@@ -108,13 +116,13 @@ CREATE TABLE `product` (
 -- Đang đổ dữ liệu cho bảng `product`
 --
 
-INSERT INTO `product` (`product_id`, `product_name`, `price`, `category_id`, `short_description`, `long_description`, `discount`, `list_image`, `avatar`, `quantity`, `total_like`, `total_view`, `rate`, `status`, `user_id`, `create_date`, `update_date`) VALUES
-(29, 'vinh', 100, 1, 'hello', 'cacban', 2, 'url', 'avatar', 3, 0, 1, 5, 1, 1, '2020-09-20 10:15:14', '2020-09-20 10:15:14'),
-(30, 'vinh', 100, 1, 'hello', 'cacban', 2, 'url', 'avatar', 3, 0, 1, 5, 1, 1, '2020-09-20 10:15:31', '2020-09-20 10:15:31'),
-(31, 'vinh', 100, 1, 'hello', '<h1 style=\"color:red\"> hello </h1>', 2, 'url', 'avatar', 3, 0, 1, 5, 0, 1, '2020-09-20 10:18:05', '2020-09-20 10:18:05'),
-(32, 'vinh', 100, 1, 'hello', 'cacban', 2, 'url', 'avatar', 3, 0, 1, 5, 0, 1, '2020-09-21 07:16:43', '2020-09-21 07:16:43'),
-(33, 'vinh1', 100, 3, 'hello', 'cacban', 2, 'url', 'avatar', 3, 0, 1, 5, 1, 5, '2020-09-21 10:28:05', '2020-09-21 09:24:13'),
-(34, 'vinh', 100, 1, 'hello', 'cacban', 2, 'url', 'avatar', 3, 0, 1, 5, 0, 1, '2020-09-21 09:53:00', '2020-09-21 09:53:00');
+INSERT INTO `product` (`product_id`, `product_name`, `price`, `category_id`, `short_description`, `long_description`, `discount`, `list_image`, `avatar`, `quantity`, `total_like`, `total_view`, `total_order`, `rate`, `status`, `user_id`, `create_date`, `update_date`) VALUES
+(29, 'vinh', 100, 1, 'hello', 'cacban', 2, 'url', 'avatar', -3, 0, 1, 8, 5, 1, 1, '2020-09-20 10:15:14', '2020-09-20 10:15:14'),
+(30, 'vinh', 100, 1, 'hello', 'cacban', 2, 'url', 'avatar', 3, 0, 3, 0, 5, 1, 1, '2020-09-20 10:15:31', '2020-09-20 10:15:31'),
+(31, 'vinh', 100, 1, 'hello', '<h1 style=\"color:red\"> hello </h1>', 2, 'url', 'avatar', -3, 0, 1, 8, 5, 1, 1, '2020-09-20 10:18:05', '2020-09-20 10:18:05'),
+(32, 'vinh', 100, 1, 'hello', 'cacban', 2, 'url', 'avatar', 3, 0, 5, 0, 5, 0, 1, '2020-09-21 07:16:43', '2020-09-21 07:16:43'),
+(33, 'vinh1', 100, 3, 'hello', 'cacban', 2, 'url', 'avatar', 3, 0, 1, NULL, 5, 1, 5, '2020-09-21 10:28:05', '2020-09-21 09:24:13'),
+(34, 'vinh', 100, 1, 'hello', 'cacban', 2, 'url', 'avatar', 3, 0, 1, NULL, 5, 1, 1, '2020-09-21 09:53:00', '2020-09-21 09:53:00');
 
 -- --------------------------------------------------------
 
@@ -131,18 +139,20 @@ CREATE TABLE `user` (
   `address` varchar(1000) COLLATE utf8_unicode_ci DEFAULT NULL,
   `viewed_products` text COLLATE utf8_unicode_ci DEFAULT NULL,
   `group_id` int(11) DEFAULT NULL,
-  `avatar` text COLLATE utf8_unicode_ci DEFAULT NULL
+  `avatar` text COLLATE utf8_unicode_ci DEFAULT NULL,
+  `active` tinyint(1) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 --
 -- Đang đổ dữ liệu cho bảng `user`
 --
 
-INSERT INTO `user` (`user_id`, `user_name`, `email`, `phone`, `password`, `address`, `viewed_products`, `group_id`, `avatar`) VALUES
-(1, 'vinh', 'vinhmai570@gmail.com', '0904735110', '4107eaebd361f3477b630f4ed7452418', NULL, NULL, 1, NULL),
-(3, 'thach', 'xxx', '023942034', '4f55d6dea8a3dc91c48ac7a382cb094a', NULL, NULL, 1, NULL),
-(4, 'test', 'test@test.com', '231324323', '098f6bcd4621d373cade4e832627b4f6', NULL, NULL, 3, NULL),
-(5, 'editor', 'editor@gmail.com', '0132234232', '5aee9dbd2a188839105073571bee1b1f', NULL, NULL, 2, NULL);
+INSERT INTO `user` (`user_id`, `user_name`, `email`, `phone`, `password`, `address`, `viewed_products`, `group_id`, `avatar`, `active`) VALUES
+(1, 'vinh', 'vinhmai570@gmail.com', '0904735110', '4107eaebd361f3477b630f4ed7452418', NULL, NULL, 1, NULL, 0),
+(3, 'thach', 'xxx', '023942034', '4f55d6dea8a3dc91c48ac7a382cb094a', NULL, NULL, 1, NULL, 0),
+(4, 'test', 'test@test.com', '231324323', '098f6bcd4621d373cade4e832627b4f6', NULL, NULL, 3, NULL, 0),
+(5, 'editor', 'editor@gmail.com', '0132234232', '5aee9dbd2a188839105073571bee1b1f', NULL, NULL, 2, NULL, 0),
+(7, 'vinh1', 'vinhmai510@gmail.com', '0904735110', '4107eaebd361f3477b630f4ed7452418', NULL, NULL, NULL, NULL, 0);
 
 --
 -- Chỉ mục cho các bảng đã đổ
@@ -204,7 +214,7 @@ ALTER TABLE `group_user`
 -- AUTO_INCREMENT cho bảng `order`
 --
 ALTER TABLE `order`
-  MODIFY `order_id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `order_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT cho bảng `product`
@@ -216,7 +226,7 @@ ALTER TABLE `product`
 -- AUTO_INCREMENT cho bảng `user`
 --
 ALTER TABLE `user`
-  MODIFY `user_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `user_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- Các ràng buộc cho các bảng đã đổ

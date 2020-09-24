@@ -149,34 +149,34 @@ class Product extends RestController {
                                 'status' => true,
                                 'message' => 'Success'
                             );
-                            $this->response($message,200);
+                            $this->response($message,201);
                         } else{
                             $message = array(
                                 'status' => false,
                                 'message' => 'Error'
                             );
-                            $this->response($message,404);
+                            $this->response($message,403);
                         }
                     } else  {
                         $message = array(
                             'status' => false,
                             'message' => 'Vui lòng nhập đầy đủ thông tin!'
                         );
-                        $this->response($message,400);
+                        $this->response($message,406);
                     }
                 } else {                                 // not access
                     $message = array(
                         'status' => false,
                         'message' => 'Authorization'
                     );
-                    $this->response($message,404);
+                    $this->response($message,401);
                 }
             } else {                                    // not access
                 $message = array(
                     'status' => false,
                     'message' => 'Authorization'
                 );
-                $this->response($message,400);
+                $this->response($message,401);
             }
     }
     
@@ -186,9 +186,9 @@ class Product extends RestController {
     * 
     * @echo message: true/false
     */
-    public function updateViewProduct_put()
+    public function updateViewProduct_patch()
     {
-        $productID= $this->put('productID');
+        $productID= $this->patch('productID');
         if ($productID!='') {
             if ($this->Product_model->updateViewProduct($productID)) {
                 $message = array(
@@ -208,7 +208,7 @@ class Product extends RestController {
                 'status' => false,
                 'message' => 'Update ERROR, not paramater!'
             );
-            $this->response($message,400);
+            $this->response($message,406);
         }
         
     }
@@ -287,14 +287,14 @@ class Product extends RestController {
                         'status' => false,
                         'message' => 'Authorization'
                     );
-                    $this->response($message,404);
+                    $this->response($message,401);
                 }
             } else {                                    // not access
                 $message = array(
                     'status' => false,
                     'message' => 'Authorization'
                 );
-                $this->response($message,400);
+                $this->response($message,401);
             }
         }
     }
@@ -347,14 +347,14 @@ class Product extends RestController {
                         'status' => false,
                         'message' => 'Authorization'
                     );
-                    $this->response($message,404);
+                    $this->response($message,401);
                 }
             } else {                                    // not access
                 $message = array(
                     'status' => false,
                     'message' => 'Authorization'
                 );
-                $this->response($message,400);
+                $this->response($message,401);
             }
         }
        
@@ -378,14 +378,14 @@ class Product extends RestController {
                     $checkAuth =true;
                 } 
                 if($checkAuth == true) {                                // confirmed
-                    $checkDelete = $this->Product_model->confirmProduct($id);
-                    if ($checkDelete == 1) {
+                    $checkConfirm = $this->Product_model->confirmProduct($id);
+                    if ($checkConfirm == 1) {
                         $message = array(
                             'status' => true,
                             'message' => 'Success'
                         );
                         $this->response($message,200);
-                    } else if($checkDelete == 0) {
+                    } else if($checkConfirm == 0) {
                         $message = array(
                             'status' => false,
                             'message' => 'Error'
@@ -403,14 +403,14 @@ class Product extends RestController {
                         'status' => false,
                         'message' => 'Authorization'
                     );
-                    $this->response($message,404);
+                    $this->response($message,406);
                 }
             } else {                                    // not access
                 $message = array(
                     'status' => false,
                     'message' => 'Authorization'
                 );
-                $this->response($message,400);
+                $this->response($message,406);
             }
         } else {
             $message = array(

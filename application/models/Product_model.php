@@ -12,7 +12,6 @@ class Product_model extends CI_Model {
     public function getProducts()
     {
         $this->db->select('product_name, price, category_id, short_description, discount, product.avatar, total_like, rate, user.user_name,user.user_id, update_date ');
-        $this->db->from('product');
         $this->db->where('status', 1);
         $this->db->join('user', 'user.user_id = product.user_id');
         $products = $this->db->get('product');
@@ -88,14 +87,31 @@ class Product_model extends CI_Model {
     {
         $this->db->select('total_view');
         $this->db->where('product_id', $productID);
-        $total_view = $this->db->get('product');
-        $total_view = $total_view->result_array();
-        $total_view = $total_view[0]['total_view']+1;
-        $data = array(
-            'total_view' => $total_view
-        );
+        $total_view = $this->db->get('product')->row();
+        $total_view = $total_view->total_view;
+        $this->db->set('total_view',$total_view);
         $this->db->where('product_id', $productID);
-        return $this->db->update('product',$data);
+        return $this->db->update('product');
+    }
+
+    /**
+     * update quantity, total_order after order
+     * 
+     * 
+     */
+    public function updateProductOrder($id, $quantity)
+    {
+        $this->db->select('quantity, total_order');
+        $this->db->where('product_id', $id);
+        $product = $this->db->get('product')->row();
+        $totalOrder = $product->total_order + $quantity;
+        $quantity = $product->quantity - $quantity; // $product->quantity is total quantity of product, $quantity is quantity in order
+        $data = array(
+            'total_order' => $totalOrder,
+            'quantity' => $quantity
+        );
+        $this->db->where('product_id', $id);
+        return $this->db->update('product', $data);
     }
 
     public function confirmProduct($id)

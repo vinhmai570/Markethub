@@ -25,28 +25,35 @@ class Auth extends RestController {
     {
         $username = $this->post('username'); 
         $password = md5($this->post('password')); 
-        $query = array('user_name' => $username); 
         $message = array(
             'status' => false,
             'message' => 'Sai tài khoản hoặc mật khẩu'
         );
-        $val = $this->User_model->getUser($query)->row(); //Model to get single data row from database base on username
+        $val = $this->User_model->getUserByUsername($username)->row(); //Model to get single data row from database base on username
         if ($this->User_model->getUser($query)->num_rows() == 0) {
             $this->response($message, 404);
         }
 		$match = $val->password;   //Get password for user from database
         if($password == $match){  
-        	$token['id'] = $val->user_id;  
-            $token['username'] = $username;
-            $date = new DateTime();
-            $token['expiration'] = $date->getTimestamp() + 60*60*24*7;// expiration = 7 day
-            $token['group_id']=$val->group_id;
-            $output['token'] = $this->objOfJwt->GenerateToken($token);
-            $output['username']=$username;
-            $output['email'] = $val->email;
-            $output['phone'] = $val->phone;
-            $output['group_id'] = $val->group_id;
-            $this->response($output, 200); //This is the respon if success
+        	if ($val->active == 1) {
+                $token['id'] = $val->user_id;  
+                $token['username'] = $username;
+                $date = new DateTime();
+                $token['expiration'] = $date->getTimestamp() + 60*60*24*7;// expiration = 7 day
+                $token['group_id']=$val->group_id;
+                $output['token'] = $this->objOfJwt->GenerateToken($token);
+                $output['username']=$username;
+                $output['email'] = $val->email;
+                $output['phone'] = $val->phone;
+                $output['group_id'] = $val->group_id;
+                $this->response($output, 200); //This is the respon if success
+            } else {
+                $message = array(
+                    'status' => false,
+                    'message' => 'Please very email'
+                );
+                $this->response($message, 400); //This is the respon if failed
+            }
         }
         else {
             $this->response($message, 400); //This is the respon if failed
