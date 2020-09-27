@@ -30,19 +30,19 @@ class Auth extends RestController {
             'message' => 'Sai tài khoản hoặc mật khẩu'
         );
         $val = $this->User_model->getUserByUsername($username)->row(); //Model to get single data row from database base on username
-        if ($this->User_model->getUser($query)->num_rows() == 0) {
+        if ($this->User_model->getUserByUsername($username)->num_rows() == 0) {
             $this->response($message, 404);
         }
 		$match = $val->password;   //Get password for user from database
         if($password == $match){  
         	if ($val->active == 1) {
                 $token['id'] = $val->user_id;  
-                $token['username'] = $username;
+                $token['username'] = $val->user_name;
                 $date = new DateTime();
                 $token['expiration'] = $date->getTimestamp() + 60*60*24*7;// expiration = 7 day
                 $token['group_id']=$val->group_id;
                 $output['token'] = $this->objOfJwt->GenerateToken($token);
-                $output['username']=$username;
+                $output['username']= $val->user_name;
                 $output['email'] = $val->email;
                 $output['phone'] = $val->phone;
                 $output['group_id'] = $val->group_id;
@@ -94,6 +94,31 @@ class Auth extends RestController {
         }
     }
 
+    public function getUserByToken()
+    {
+        $token = isset($this->input->request_headers('Authorization')['Authorization'])?$this->input->request_headers('Authorization')['Authorization']:0; // get token in header
+        if ($token) {
+            $token = $this->objOfJwt->DecodeToken($token);
+            $now = new DateTime();
+            $checkTime = $now->getTimestamp();
+            if ($checkTime > $token['expiration']) { // token expired
+                $message = array(
+                    'status' => false,
+                    'message' => "Auth Failed"
+                );
+                return 0;
+            } else {
+                return $token;
+            }
+        } else {
+            $message = array(
+                'status' => false,
+                'message' => "Auth Failed"
+            );
+            return 0;
+        }
+    }
+
     /**
     * Check permission by token from header request
     * 
@@ -130,7 +155,8 @@ class Auth extends RestController {
                 } else {
                     $message = array(
                         'status' => false,
-                        'permission' => 'user'
+                        'permission' => 'user',
+                        'user_id' => $token['id']
                     );
                     return $message;
                 }

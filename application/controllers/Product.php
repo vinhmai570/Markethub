@@ -12,6 +12,7 @@ class Product extends RestController {
         parent::__construct();
         $this->load->model('Product_model');
         $this->auth = new Auth();
+        date_default_timezone_set('Asia/Saigon');
     }
 
     public function index()
@@ -21,13 +22,15 @@ class Product extends RestController {
     
     /**
     * get all product
-    * method get
-    *
+    * 
+    * @param start, limit - optional
     * @echo response json all product
     */
     public function getProducts_get()
     {
-        $products = $this->Product_model->getProducts();
+        $start = $this->get('start', true);
+        $limit = $this->get('limit', true);
+        $products = $this->Product_model->getProducts($start, $limit);
         if($products) {
             $this->response($products, 200);
         } 
@@ -107,7 +110,6 @@ class Product extends RestController {
                 if ($getPermission['permission'] == 'admin' || $getPermission['permission'] == 'editor')  {
                     $checkAuth =true;
                 }
-
                 if($checkAuth == true) {                                // confirmed
                     $name = $this->post('productName', true);
                     $price = $this->post('price');
@@ -169,46 +171,49 @@ class Product extends RestController {
                         'status' => false,
                         'message' => 'Authorization'
                     );
-                    $this->response($message,401);
+                    $this->response($message,406);
                 }
             } else {                                    // not access
                 $message = array(
                     'status' => false,
                     'message' => 'Authorization'
                 );
-                $this->response($message,401);
+                $this->response($message,406);
             }
     }
     
     /**
     * update view in product
-    * method put
+    * method patch
     * 
     * @echo message: true/false
     */
-    public function updateViewProduct_patch()
+    public function updateLikeProduct_patch()
     {
-        $productID= $this->patch('productID');
-        if ($productID!='') {
-            if ($this->Product_model->updateViewProduct($productID)) {
-                $message = array(
-                    'status' => true,
-                    'message' => 'Update Successful!'
-                );
-                $this->response($message,200);
+        $token = $this->auth->getUserByToken();
+        if ($token) {
+            $productID= $this->patch('productID');
+            if ($productID!='') {
+                if ($this->Product_model->updateLikeProduct($productID)) {
+                    $message = array(
+                        'status' => true,
+                        'message' => 'Update Successful!'
+                    );
+                    $this->response($message,200);
+                } else {
+                    $message = array(
+                        'status' => false,
+                        'message' => 'Update ERROR!'
+                    );
+                    $this->response($message,400);
+                }
             } else {
                 $message = array(
                     'status' => false,
-                    'message' => 'Update ERROR!'
+                    'message' => 'Update ERROR, not paramater!'
                 );
-                $this->response($message,400);
+                $this->response($message,401);
             }
-        } else {
-            $message = array(
-                'status' => false,
-                'message' => 'Update ERROR, not paramater!'
-            );
-            $this->response($message,406);
         }
         
     }
@@ -403,14 +408,14 @@ class Product extends RestController {
                         'status' => false,
                         'message' => 'Authorization'
                     );
-                    $this->response($message,406);
+                    $this->response($message,401);
                 }
             } else {                                    // not access
                 $message = array(
                     'status' => false,
                     'message' => 'Authorization'
                 );
-                $this->response($message,406);
+                $this->response($message,401);
             }
         } else {
             $message = array(
@@ -420,7 +425,33 @@ class Product extends RestController {
             $this->response($message,404);
         }
     }
-   
+
+    /**
+     * Search product - method get
+     *  
+     * @param q - input text
+     * @param category - category_id
+     * @param shop - shop_id
+     * @param price - price in range
+     * @param lte   - price less than or equal
+     * @param gte   - price greater than or equal to
+     * @param orderby   - 
+     * @param start     
+     * @param limit     
+     */
+    public function search_get()
+    {
+        $query = $this->get('q',true);
+        $categoryID = $this->get('category',true);
+        $shopID = $this->get('shop',true);
+        $priceLte = $this->get('lte',true);
+        $priceGte = $this->get('gte', true);
+        $orderBy = $this->get('orderby', true);
+        $start = $this->get('start');
+        $limit = $this->get('limit');
+        $products = $this->Product_model->searchProduct($query, $categoryID, $shopID, $priceGte, $priceLte, $orderBy,$start, $limit);
+        $this->response($products,200);
+    }
 }
 
 /* End of file Controllername.php */
