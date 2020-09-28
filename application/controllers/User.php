@@ -97,7 +97,7 @@ class User extends RestController {
         $password = md5($this->post('password'));
 
         //checking email already exists then to show error
-        $que=$this->db->query("select * from user where email='$email'");
+        $que=$this->db->query("select * from user where email='$email' or user_name ='$name' ");
 		$row = $que->num_rows();
 		if ($row>0) {
             $que=$this->db->query("select * from user where email='$email'")->row();
@@ -252,7 +252,6 @@ class User extends RestController {
             );
             $this->response($message,200);
         }
-        
         //if not already exists, then running code bellow
         else
         {
@@ -292,7 +291,6 @@ class User extends RestController {
             }
         }
     }
-
     public function updateGroupUser_put()
     {
         

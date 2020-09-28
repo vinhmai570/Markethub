@@ -24,7 +24,7 @@ class User_model extends CI_Model {
         //configure email settings
         $config['protocol'] = 'smtp';
         $config['smtp_host'] = 'ssl://smtp.mydomain.com'; //smtp host name
-        $config['smtp_port'] = '465'; //smtp port number
+        $config['smtp_port'] = '25'; //smtp port number
         $config['smtp_user'] = $fromEmail;
         $config['smtp_pass'] = 'pass'; //$from_email password
         $config['mailtype'] = 'html';
@@ -102,12 +102,11 @@ class User_model extends CI_Model {
     
     public function getUserByUsername($username)
     {
-        $this->db->select('user_name, email, phone, password, address, group_id, active ');
+        $this->db->select('user_name, user_id, email, phone, password, address, group_id, active ');
         $this->db->from('user');
-        $this->db->where('username',$username);
-        $userByID = $this->db->get();
-        $userByID = $userByID->result_array();
-        return $userByID;
+        $this->db->where('user_name',$username);
+        $this->db->or_where('email', $username);
+        return $this->db->get();
     }
 
     public function getUserByID($id)
