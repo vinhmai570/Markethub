@@ -9,10 +9,17 @@ class Product_model extends CI_Model {
 		
     }
     
-    public function getProducts($start = null, $limit = null)
+    public function getProducts($orderBy = null, $start = null, $limit = null)
     {
         $this->db->select('product_id, product_name, price, category_id, short_description, discount, product.avatar, total_like, rate, user.user_name,user.user_id, update_date ');
         $this->db->join('user', 'user.user_id = product.user_id');
+        if ($orderBy) {
+            if ($orderBy == 'discount') {
+                $this->db->order_by('discount','DESC');
+            } else if ($orderBy == 'totalorder') {
+                $this->db->order_by('total_order','DESC');
+            }
+        }
         if ($start && $limit) {
             $this->db->limit($limit, $start);
         }
@@ -32,9 +39,8 @@ class Product_model extends CI_Model {
 
     public function getProductByID($id)
     {
-        $this->db->select('product_name, price, category_id, short_description, long_description, discount, list_image, product.avatar, total_like, total_view, rate, user.user_name,user.user_id, update_date ');
+        $this->db->select('product_id, product_name, price, category_id, short_description, long_description, discount, list_image, product.avatar, total_like, total_view, rate, user.user_name,user.user_id, update_date ');
         $this->db->from('product');
-        $this->db->where('status', 1);
         $this->db->where('product_id',$id);
         $this->db->join('user', 'user.user_id = product.user_id');
         $productByID = $this->db->get()->row();
@@ -43,9 +49,8 @@ class Product_model extends CI_Model {
 
     public function getProductByCategory($categoryID)
     {
-        $this->db->select('product_name, price, category_id, short_description, long_description, discount, list_image, product.avatar, total_like, total_view, rate, user.user_name,user.user_id, update_date ');
+        $this->db->select('product_id, product_name, price, category_id, short_description, long_description, discount, list_image, product.avatar, total_like, total_view, rate, user.user_name,product.user_id, update_date ');
         $this->db->from('product');
-        $this->db->where('status', 1);
         $this->db->where('category_id',$categoryID);
         $this->db->join('user', 'user.user_id = product.user_id');
         $productByCategory = $this->db->get()->result_array();
@@ -54,35 +59,12 @@ class Product_model extends CI_Model {
 
     public function getProductByUser($userID)
     {
-        $this->db->select('product_name, price, category_id, short_description, long_description, discount, list_image, product.avatar, total_like, total_view, rate, user.user_name,user.user_id, update_date ');
+        $this->db->select('product_id, product_name, price, category_id, short_description, long_description, discount, list_image, product.avatar, total_like, total_view, rate, user.user_name,user.user_id, update_date ');
         $this->db->from('product');
-        $this->db->where('status', 1);
-        $this->db->where('user_id',$userID);
+        $this->db->where('product.user_id',$userID);
         $this->db->join('user', 'user.user_id = product.user_id');
         $productByUser = $this->db->get()->result_array();
         return $productByUser;
-    }
-
-    public function getProductByView()
-    {
-        $this->db->select('product_name, price, category_id, short_description, discount, product.avatar, total_like, rate, user.user_name,user.user_id, update_date ');
-        $this->db->from('product');
-        $this->db->where('status', 1);
-        $this->db->join('user', 'user.user_id = product.user_id');
-        $this->db->order_by('total_view','DESC');
-        $productByView = $this->db->get()->result_array();
-        return $productByView;
-    }
-
-    public function getProductByDiscount()
-    {
-        $this->db->select('product_id, product_name, price, category_id, short_description, discount, product.avatar, total_like, rate, user.user_name,user.user_id, update_date ');
-        $this->db->from('product');
-        $this->db->where('status', 1);
-        $this->db->join('user', 'user.user_id = product.user_id');
-        $this->db->order_by('discount','DESC');
-        $productByDiscount = $this->db->get()->result_array();
-        return $productByDiscount;
     }
 
     public function updateLikeProduct($productID)
@@ -90,10 +72,15 @@ class Product_model extends CI_Model {
         $this->db->select('total_like');
         $this->db->where('product_id', $productID);
         $total_like = $this->db->get('product')->row();
-        $total_like = $total_like->total_like;
+        $total_like = $total_like->total_like+1;
         $this->db->set('total_like',$total_like);
         $this->db->where('product_id', $productID);
-        return $this->db->update('product');
+        $this->db->update('product');
+        if (!$this->db->affected_rows()) {
+            return 0; // id not found
+        } else {
+            return 1; // success
+        }
     }
 
     /**
@@ -113,7 +100,14 @@ class Product_model extends CI_Model {
             'quantity' => $quantity
         );
         $this->db->where('product_id', $id);
-        return $this->db->update('product', $data);
+        $this->db->update('product', $data);
+        if ($this->db->error()['message']) {
+            return 0; // error
+        } else if (!$this->db->affected_rows()) {
+            return 0; // id not found
+        } else {
+            return 1; // success
+        }
     }
 
     public function confirmProduct($id)
@@ -123,7 +117,7 @@ class Product_model extends CI_Model {
         if ($this->db->error()['message']) {
             return 0; // error
         } else if (!$this->db->affected_rows()) {
-            return 2; // id not found
+            return 0; // id not found
         } else {
             return 1; // success
         }
@@ -132,17 +126,24 @@ class Product_model extends CI_Model {
     public function updateProduct($product, $id)
     {
         $this->db->where('product_id', $id);
-        return $this->db->update('product',$product);
+        $this->db->update('product',$product);
+        if ($this->db->error()['message']) {
+            return 0; // error
+        } else if (!$this->db->affected_rows()) {
+            return 0; // id not found
+        } else {
+            return 1; // success
+        }
     }
 
     public function deleteProduct($id)
     {
         $this->db->where('product_id',$id);
         $this->db->delete('product');
-        if ($this->db->error()['message']) {
+        if ($this->db->error()['code']) {
             return 0; // error
         } else if (!$this->db->affected_rows()) {
-            return 2; // id not found
+            return 0; // id not found
         } else {
             return 1; // success
         }

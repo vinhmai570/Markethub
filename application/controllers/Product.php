@@ -24,13 +24,15 @@ class Product extends RestController {
     * get all product
     * 
     * @param start, limit - optional
+    * @param orderby - discount/totalorder
     * @echo response json all product
     */
     public function getProducts_get()
     {
+        $orderBy = $this->get('orderby',true);
         $start = $this->get('start', true);
         $limit = $this->get('limit', true);
-        $products = $this->Product_model->getProducts($start, $limit);
+        $products = $this->Product_model->getProducts($orderBy, $start, $limit);
         if($products) {
             $this->response($products, 200);
         } 
@@ -73,29 +75,6 @@ class Product extends RestController {
         $this->response($productByUser,200);
     }
 
-    /**
-     * get product by view sort by max->min
-     * 
-     * @echo response json product
-     */
-    public function getProductByView_get()
-    {
-        $productByView = $this->Product_model->getProductByView();
-        $this->response($productByView,200);
-    }
-
-
-    /**
-     * get product by view sort by max->min
-     * 
-     * @echo response json product
-     */
-    public function getProductByDiscount_get()
-    {
-        $productByDiscount = $this->Product_model->getProductByDiscount();
-        $this->response($productByView,200);
-    }
-
      /**
     * Insert product from Client
     * Method post
@@ -120,14 +99,13 @@ class Product extends RestController {
                     $listImage = $this->post('listImage', true);
                     $avatar = $this->post('avatar', true);
                     $quantity= $this->post('quantity');
-                    $userID= $this->post('userID');
                     $totalLike = 0;
                     $totalView = 1;
                     $rate = 5 ;
                     $status = 0;
                     $createDate = $updateDate= date("Y-m-d h:i:sa");
                     
-                    if ($name!='' && $price!='' && $categoryID!='' && $shortDescription !='' && $longDescription!='' && $quantity!='' && $avatar !='' && $userID!='') {
+                    if ($name!='' && $price!='' && $categoryID!='' && $shortDescription !='' && $longDescription!='' && $quantity!='' && $avatar !='') {
                         $product = array(
                             'product_name'=> $name,
                             'price' => $price,
@@ -142,7 +120,7 @@ class Product extends RestController {
                             'total_view' => $totalView,
                             'rate' => $rate,
                             'status' => $status,
-                            'user_id' => $userID,
+                            'user_id' => $getPermission['user_id'],
                             'create_date' => $createDate,
                             'update_date' => $createDate 
                         );
@@ -192,28 +170,36 @@ class Product extends RestController {
     {
         $token = $this->auth->getUserByToken();
         if ($token) {
-            $productID= $this->patch('productID');
-            if ($productID!='') {
-                if ($this->Product_model->updateLikeProduct($productID)) {
-                    $message = array(
-                        'status' => true,
-                        'message' => 'Update Successful!'
-                    );
-                    $this->response($message,200);
+            if ($token['username']) {
+                $productID= $this->patch('productID');
+                if ($productID!='') {
+                    if ($this->Product_model->updateLikeProduct($productID)) {
+                        $message = array(
+                            'status' => true,
+                            'message' => 'Update Successful!'
+                        );
+                        $this->response($message,200);
+                    } else {
+                        $message = array(
+                            'status' => false,
+                            'message' => 'Update ERROR!'
+                        );
+                        $this->response($message,400);
+                    }
                 } else {
                     $message = array(
                         'status' => false,
-                        'message' => 'Update ERROR!'
+                        'message' => 'Update ERROR, not paramater!'
                     );
-                    $this->response($message,400);
+                    $this->response($message,401);
                 }
-            } else {
-                $message = array(
-                    'status' => false,
-                    'message' => 'Update ERROR, not paramater!'
-                );
-                $this->response($message,401);
             }
+        } else {
+            $message = array(
+                'status' => false,
+                'message' => 'Authorization'
+            );
+            $this->response($message,401);
         }
         
     }
@@ -301,6 +287,12 @@ class Product extends RestController {
                 );
                 $this->response($message,401);
             }
+        } else {
+            $message = array(
+                'status' => false,
+                'message' => 'id not found'
+            );
+            $this->response($message,404);
         }
     }
 
