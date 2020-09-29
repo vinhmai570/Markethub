@@ -41,6 +41,8 @@ class Order_model extends CI_Model {
         }
     }
 
+
+
     public function orderListConfirmed($userID = null,$isShop = null, $permission = null)
     {   
         $this->db->select('*');
@@ -57,13 +59,13 @@ class Order_model extends CI_Model {
             } else {                //            get list order by user
                 $this->db->where('user_id', $userID);
             }
-            $this->db->where('status', 0);
+            $this->db->where('status', 1);
             return $this->db->get()->result_array();
         }
        
     }
 
-    public function getPOrderByOrderID($orderID)
+    public function getOrderByOrderID($orderID)
     {
         $this->db->select('*');
         $this->db->where('order_id', $orderID);
@@ -88,10 +90,19 @@ class Order_model extends CI_Model {
     {
         $this->db->select('*');
         $this->db->where('order_id', $orderID);
-        $order = $this->db->get('order');
-        return $order->row();
+        $order = $this->db->get('order_item');
+        return $order->result_array();
     }
-    
+
+    public function getProductByID($id)
+    {
+        $this->db->select('product_id, product_name, price, category_id, short_description, long_description, discount, list_image, product.avatar, total_like, total_view, rate, user.user_name,user.user_id, update_date ');
+        $this->db->from('product');
+        $this->db->where('product_id',$id);
+        $this->db->join('user', 'user.user_id = product.user_id');
+        $productByID = $this->db->get()->row();
+        return $productByID;
+    }
     
     public function deleteOrder($orderID)
     {
@@ -100,6 +111,8 @@ class Order_model extends CI_Model {
         $this->db->delete('order');
         if ($this->db->error()['message']) {
             return 0; // error
+        } else if (!$this->db->affected_rows()) {
+            return 404; // id not found
         } else {
             return 1;
         }
@@ -116,7 +129,27 @@ class Order_model extends CI_Model {
         }
      }
 
-   
+      /**
+     * update quantity, total_order after order
+     * 
+     * 
+     */
+    public function updateProductOrder($id, $quantity, $check = false)
+    {
+        if (!$check) {
+            $sql = "update product set total_order=total_order+$quantity, quantity=quantity-$quantity where product_id=$id ";
+        } else {
+            $sql = "update product set total_order=total_order-$quantity, quantity=quantity+$quantity where product_id=$id ";
+        }
+        $this->db->query($sql);
+        if ($this->db->error()['message']) {
+            return 0; // error
+        } else if (!$this->db->affected_rows()) {
+            return 0; // id not found
+        } else {
+            return 1; // success
+        }
+    }
 
 }
 

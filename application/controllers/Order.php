@@ -32,8 +32,12 @@ class Order extends RestController {
             $email = $this->post('email');
             $orderDate = date("Y-m-d h:i:sa");
             if ($userID!='' && $totalPrice!='' && $totalProduct!='' && $productOrder!='' && $phone!='' && $address !='') {
+                $productID = $productOrder[0]['productID'];             
+                $product = $this->Order_model->getProductByID($productID); // get product then get shop_id
+                $shopID = $product->user_id;
                 $order = array(
                     'user_id' => $userID,
+                    'shop_id' => $shopID,
                     'total_price' => $totalPrice,
                     'order_address' => $address,
                     'order_phone' => $phone,
@@ -51,6 +55,10 @@ class Order extends RestController {
                             'total_discount' => $product['total_discount']
                         );  
                         $this->Order_model->insertOrderItem($orderItem);
+                    }
+                    $productOrder = $this->Order_model->getProductByOrderID($orderID);
+                    foreach ($productOrder as $key => $product) {
+                        $this->Order_model->updateProductOrder($product['product_id'],$product['quantity']);
                     }
                     $message = array(
                         'status' => true,
@@ -74,14 +82,17 @@ class Order extends RestController {
         
     }
 
-
     public function orders_get()
     {   
         $status = $this->get('status');
         $getPermission = $this->auth->checkPermission();
+        if ($getPermission['permission']==='unknown') {
+            $this->response($getPermission,401);
+            return 0;
+        }
+        $userID = $getPermission['user_id'];
         if ($status == 'confirmed') {                       // get orders confirmed
             if ($getPermission['permission'] == 'editor')  {            
-                $userID = $getPermission['user_id'];
                 $order = $this->Order_model->orderListConfirmed($userID,1);         
                 $this->response($order,200);
             } else if($getPermission['permission'] == 'user')  {
@@ -124,8 +135,44 @@ class Order extends RestController {
 
     public function orderItems_get($orderID)
     {
-        $orderItems = $this->Order_model->getOrderItems($orderID);
-        $this->response($orderItems, 200);
+        $getPermission = $this->auth->checkPermission();
+        if ($getPermission['permission']==='unknown') {
+            $this->response($getPermission,401);
+            return 0;
+        }
+        $order = $this->Order_model->getOrderByOrderID($orderID);
+        if ($order == null) {
+            $message = array(
+                'status' => false,
+                'message' => 'Order ID Not Found'
+            );
+            $this->response($message,404);
+            return 0;
+        }
+        $userID = $getPermission['user_id'];
+        // get orders confirmed
+        if ($getPermission['permission'] == 'editor')  {            
+            if ($userID == $order->shop_id) {
+                $orderItems = $this->Order_model->getOrderItems($orderID);
+                $this->response($orderItems, 200);                
+            }
+        } else if($getPermission['permission'] == 'user')  {
+            if ($userID == $order->user_id) {
+                $orderItems = $this->Order_model->getOrderItems($orderID);
+                $this->response($orderItems, 200);                
+            }
+        } else if($getPermission['permission'] == 'admin') {                    // admin
+            $orderItems = $this->Order_model->getOrderItems($orderID);
+            $this->response($orderItems, 200);
+        } else {
+            $message = array(
+                'status' => false,
+                'message' => 'Authorization',
+                'permission' => $getPermission['permission']
+            );
+            $this->response($message,401);
+        }
+        
     }
 
     public function confirmOrder_put()
@@ -135,20 +182,25 @@ class Order extends RestController {
             $getPermission = $this->auth->checkPermission();
             $checkAuth = false;
             if ($getPermission['permission'] == 'editor')  {
-                $userID = $productByID->user_id;
-                if ($userID == $getPermission['user_id']) {         // product created by this user_id 
+                $shopID = $this->Order_model->getOrderByOrderID($orderID)->shop_id;
+                if ($shopID == $getPermission['user_id']) {         // product created by this user_id 
                     $checkAuth = true;
                 }
             } 
             if($checkAuth == true) {                                // confirmed
                 if ($this->Order_model->confirmOrder($orderID)) {
-                    $this->load->model('Product_model');
-                    $order = $this->Order_model->getProductByOrderID($orderID);
-                    $productOrder = json_decode($order->product_order);
-                    foreach ($productOrder as $key => $product) {
-                        $this->Product_model->updateProductOrder($product->id,$product->quantity);
-                    }
-                }                    
+                    $message = array(
+                        'status' => true,
+                        'message' => 'Success'
+                    );
+                    $this->response($message,200);
+                } else {
+                    $message = array(
+                        'status' => false,
+                        'message' => 'error'
+                    );
+                    $this->response($message,400);
+                }
             } else {                                 // not access
                 $message = array(
                     'status' => false,
@@ -167,29 +219,46 @@ class Order extends RestController {
 
     public function delete_delete($orderID)
     {
-
         if ($orderID!='') {
             $getPermission = $this->auth->checkPermission();
+            $order = $this->Order_model->getOrderByOrderID($orderID);
+            if ($order == null) {
+                $message = array(
+                    'status' => false,
+                    'message' => 'Order Not Found'
+                );
+                $this->response($message,404);
+                return 0;
+            }
             $checkAuth = false;
             if ($getPermission['permission'] == 'admin'){
                 $checkAuth =true;
             } else if ($getPermission['permission'] == 'editor')  {
-                $order = $this->Order_model->getPOrderByOrderID($orderID);
+                $order = $this->Order_model->getOrderByOrderID($orderID);
                 if ($order->shop_id == $getPermission['user_id']) {
                     $checkAuth = true;
                 }
             } else if ($getPermission['permission'] == 'user') {
-                $order = $this->Order_model->getPOrderByOrderID($orderID);
                 if ($order->user_id == $getPermission['user_id']) {
                     $checkAuth = true;
                 }
             }
             if($checkAuth == true) {                                // confirmed
+                $productOrder = $this->Order_model->getProductByOrderID($orderID);
                 if ($this->Order_model->deleteOrderItems($orderID)) {
-                    if ($this->Order_model->deleteOrder($orderID))  {
+                    if ($this->Order_model->deleteOrder($orderID)===1)  {
+                        foreach ($productOrder as $key => $product) {
+                            $this->Order_model->updateProductOrder($product['product_id'],$product['quantity'],true);
+                        }
                         $message = array(
                             'status' => true,
                             'message' => 'Xóa thành công'
+                        );
+                        $this->response($message,200);
+                    } else if($this->Order_model->deleteOrder($orderID)===404) {
+                        $message = array(
+                            'status' => false,
+                            'message' => 'Sản phẩm đã xác nhận không thể xóa'
                         );
                         $this->response($message,400);
                     } else {

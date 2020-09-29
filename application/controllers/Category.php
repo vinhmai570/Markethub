@@ -57,18 +57,19 @@ class Category extends RestController {
             if ($getPermission['status'] == true) 
             {                   // admin or editor
                 $checkAuth = false;
-                if ($getPermission['permission'] == 'admin' || $getPermission['permission'] == 'editor') { $checkAuth =true; }
-        
+                if ($getPermission['permission'] == 'admin' || $getPermission['permission'] == 'editor') 
+                    { $checkAuth =true; 
+                }
                 if($checkAuth == true) 
                 {     
-                $category_Name = $this->post('name'); 
-                $category_Banner = $this->post('banner');
-                $category_UserID = $this->post('user_id');
-                $category_Parent_ID = $this->post('parent_id');
-                $createDate = $updateDate= date("Y-m-d h:i:sa");
-                //checking name already exists then to show error
-                $que=$this->db->query("select * from category where name='$category_Name'");
-                $row = $que->num_rows();
+                    $category_Name = $this->post('name'); 
+                    $category_Banner = $this->post('banner');
+                    $category_UserID = $this->post('user_id');
+                    $category_Parent_ID = $this->post('parent_id');
+                    $createDate = $updateDate= date("Y-m-d h:i:sa");
+                    //checking name already exists then to show error
+                    $que=$this->db->query("select * from category where name='$category_Name'");
+                    $row = $que->num_rows();
                     if($row>0)
                     {
                         $message = array(
@@ -124,7 +125,6 @@ class Category extends RestController {
             $this->response($message,400);
         }
     }
-                    
 
     public function updateCategory_put()
     {

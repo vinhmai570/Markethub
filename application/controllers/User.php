@@ -163,7 +163,7 @@ class User extends RestController {
                             'status' => true,
                             'message' => 'Registered successfully, please check email to confirm account'
                         );
-                        $this->response($message,200);
+                        $this->response($message,201);
                     } else {
                         $message = array(
                             'status' => false,
@@ -231,7 +231,7 @@ class User extends RestController {
         return $key;
     }
     
-    public function updateUser_put()
+    public function update_put()
     {
         $id = $this->put('id');
         $name = $this->put('user_name');
@@ -291,7 +291,7 @@ class User extends RestController {
             }
         }
     }
-    public function updateGroupUser_put()
+    public function changePassword_patch()
     {
         
     }
