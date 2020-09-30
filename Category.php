@@ -147,8 +147,8 @@ class Category extends RestController {
                     $category_Name = $this->put('name'); 
                     $category_Banner = $this->put('banner');
                     $category_UserID = $this->put('user_id');
-                    $category_Status = $this->put('parent_id');
-                    $category_Parent_ID = $this->put('status');
+                    $category_Status = $this->put('status');
+                    $category_Parent_ID = $this->put('parent_id');
                     $updateDate= date("Y-m-d h:i:sa");
 
                     //checking name already exists then to show error
