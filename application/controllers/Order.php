@@ -133,7 +133,7 @@ class Order extends RestController {
 
     }
 
-    public function orderItems_get($orderID)
+    public function orderItems_get($orderID = 0)
     {
         $getPermission = $this->auth->checkPermission();
         if ($getPermission['permission']==='unknown') {

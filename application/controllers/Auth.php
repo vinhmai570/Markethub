@@ -29,8 +29,8 @@ class Auth extends RestController {
             'status' => false,
             'message' => 'Sai tài khoản hoặc mật khẩu'
         );
-        $val = $this->User_model->getUserByUsername($username)->row(); //Model to get single data row from database base on username
-        if ($this->User_model->getUserByUsername($username)->num_rows() == 0) {
+        $val = $this->User_model->getUserByUsername($username); //Model to get single data row from database base on username
+        if (!$val) {
             $this->response($message, 404);
         }
 		$match = $val->password;   //Get password for user from database
@@ -134,7 +134,9 @@ class Auth extends RestController {
             if ($checkTime > $token['expiration']) { // token expired
                 $message = array(
                     'status' => false,
-                    'message' => "Auth Failed"
+                    'message' => "Auth Failed",
+                    'user_id' => 0,
+                    'username' => ''
                 );
                 return $message;
             } else {                                // token true
@@ -142,21 +144,24 @@ class Auth extends RestController {
                     $message = array(
                         'status' => true,
                         'permission' => 'admin',
-                        'user_id' => $token['id']
+                        'user_id' => $token['id'],
+                        'username' => $token['username']
                     );
                     return $message;
                 } else if($token['group_id'] == 2 ) {
                     $message = array(
                         'status' => true,
                         'permission' => 'editor',
-                        'user_id' => $token['id']
+                        'user_id' => $token['id'],
+                        'username' => $token['username']
                     );
                     return $message;
                 } else {
                     $message = array(
                         'status' => false,
                         'permission' => 'user',
-                        'user_id' => $token['id']
+                        'user_id' => $token['id'],
+                        'username' => $token['username']
                     );
                     return $message;
                 }
@@ -164,7 +169,9 @@ class Auth extends RestController {
         } else {
             $message = array(
                 'status' => false,
+                'user_id' => 0,
                 'permission' => 'unknown',
+                'username' => ''
             );
             return $message;
         }
