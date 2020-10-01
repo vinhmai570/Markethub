@@ -119,7 +119,7 @@ class User_model extends CI_Model {
 
     public function getUserByID($id)
     {
-        $this->db->select('user_name, email, phone, password, address, group_id ');
+        $this->db->select('user_name, email, phone, address, group_id ');
         $this->db->from('user');
         $this->db->where('user_id',$id);
         $userByID = $this->db->get();

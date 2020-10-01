@@ -195,6 +195,10 @@ class User extends RestController {
         }
     }
 
+    /**
+     * Verify email 
+     * 
+     */
     public function verify_get($key)
     {
         if(isset($key)) {
@@ -208,11 +212,16 @@ class User extends RestController {
         }
     }
 
+    /**
+     * Send random password 6 characters to email user
+     * 
+     * @body param: email
+     */
     public function forgotPassword_post()
     {
         $email = $this->post('email');
         if ($email) {
-            $password = $this->randomString(6);
+            $password = $this->randomString(6);                         // Random password
             if ($this->User_model->sendPassword($email, $password)) {
                 $message = array(
                     'status' => true,
@@ -238,6 +247,11 @@ class User extends RestController {
         return $key;
     }
     
+    /**
+     * Update user
+     * 
+     * @param body: email, phone, address, avatar optional
+     */
     public function update_put()
     {
         $username = $this->auth->checkPermission()['username'];

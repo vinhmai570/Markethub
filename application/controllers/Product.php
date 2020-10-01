@@ -106,6 +106,9 @@ class Product extends RestController {
                     $createDate = $updateDate= date("Y-m-d h:i:sa");
                     
                     if ($name!='' && $price!='' && $categoryID!='' && $shortDescription !='' && $longDescription!='' && $quantity!='' && $avatar !='') {
+                        if ($listImage) {
+                            $listImage = json_encode($listImage);
+                        }
                         $product = array(
                             'product_name'=> $name,
                             'price' => $price,
@@ -161,7 +164,7 @@ class Product extends RestController {
     }
     
     /**
-    * update view in product
+    * update like in product
     * method patch
     * 
     * @echo message: true/false
@@ -170,21 +173,31 @@ class Product extends RestController {
     {
         $token = $this->auth->getUserByToken();
         if ($token) {
-            if ($token['username']) {
+            if (isset($token['username'])) {
                 $productID= $this->patch('productID');
                 if ($productID!='') {
-                    if ($this->Product_model->updateLikeProduct($productID)) {
+                    if ($this->Product_model->insertUserLikeOrView($token['id'], $productID, false)) {          // if param 3nd is false, insert like, else insert view
+                        $this->Product_model->updateLikeOrViewProduct($productID,true,false);
                         $message = array(
                             'status' => true,
                             'message' => 'Update Successful!'
                         );
                         $this->response($message,200);
                     } else {
-                        $message = array(
-                            'status' => false,
-                            'message' => 'Update ERROR!'
-                        );
-                        $this->response($message,400);
+                        if ($this->Product_model->deleteUserLikeOrView($token['id'], $productID)) {
+                            $this->Product_model->updateLikeOrViewProduct($productID, false);
+                            $message = array(
+                                'status' => true,
+                                'message' => 'Update Successful!'
+                            );
+                            $this->response($message,200);
+                        } else {
+                            $message = array(
+                                'status' => false,
+                                'message' => 'Update ERROR'
+                            );
+                            $this->response($message,400);
+                        }
                     }
                 } else {
                     $message = array(
@@ -193,6 +206,12 @@ class Product extends RestController {
                     );
                     $this->response($message,401);
                 }
+            } else {
+                $message = array(
+                    'status' => false,
+                    'message' => 'Authorization'
+                );
+                $this->response($message,401);    
             }
         } else {
             $message = array(
@@ -200,10 +219,121 @@ class Product extends RestController {
                 'message' => 'Authorization'
             );
             $this->response($message,401);
-        }
-        
+        }     
     }
 
+    /**
+    * update like in product
+    * method patch
+    * 
+    * @echo message: true/false
+    */
+    public function updateViewProduct_patch()
+    {
+        $token = $this->auth->getUserByToken();
+        if ($token) {
+            if (isset($token['username'])) {
+                $productID= $this->patch('productID');
+                if ($productID!='') {
+                    if ($this->Product_model->insertUserLikeOrView($token['id'], $productID, true)) {          // if param 3nd is false, insert like, else insert view
+                        $this->Product_model->updateLikeOrViewProduct($productID,true,true);
+                        $message = array(
+                            'status' => true,
+                            'message' => 'Update Successful!'
+                        );
+                        $this->response($message,200);
+                    } else {
+                        $message = array(
+                            'status' => true,
+                            'message' => 'Sản phẩm đã xem'
+                        );
+                        $this->response($message,200);
+                    }
+                } else {
+                    $message = array(
+                        'status' => false,
+                        'message' => 'Update ERROR, not paramater!'
+                    );
+                    $this->response($message,401);
+                }
+            } else {
+                $message = array(
+                    'status' => false,
+                    'message' => 'Authorization'
+                );
+                $this->response($message,401);    
+            }
+        } else {
+            $message = array(
+                'status' => false,
+                'message' => 'Authorization'
+            );
+            $this->response($message,401);
+        }     
+    }
+
+    public function getProductsLiked_get()
+    {
+        $user = $this->auth->getUserByToken();
+        if ($user) {
+            if (isset($user['id'])) {
+                $products = $this->Product_model->getProductsLikedOrViewed($user['id'], false);
+                if($products) {
+                    $this->response($products,200);
+                } else {
+                    $message = array(
+                        'status' => false,
+                        'message' => 'Chưa có sản phẩm nào'
+                    );
+                    $this->response($message,200);
+                }
+            } else {
+                $message = array(
+                    'status' => false,
+                    'message' => 'UnAuthorization'
+                );
+                $this->response($message,401);
+            }
+        } else {
+            $message = array(
+                'status' => false,
+                'message' => 'UnAuthorization'
+            );
+            $this->response($message,401);
+        }
+    }
+    
+    public function getProductsViewed_get()
+    {
+        $user = $this->auth->getUserByToken();
+        if ($user) {
+            if (isset($user['id'])) {
+                $products = $this->Product_model->getProductsLikedOrViewed($user['id'], true);
+                if($products) {
+                    $this->response($products,200);
+                } else {
+                    $message = array(
+                        'status' => false,
+                        'message' => 'Chưa có sản phẩm nào'
+                    );
+                    $this->response($message,200);
+                }
+            } else {
+                $message = array(
+                    'status' => false,
+                    'message' => 'UnAuthorization'
+                );
+                $this->response($message,401);
+            }
+        } else {
+            $message = array(
+                'status' => false,
+                'message' => 'UnAuthorization'
+            );
+            $this->response($message,401);
+        }
+    }
+    
     /**
     * update product
     * 
@@ -439,10 +569,40 @@ class Product extends RestController {
         $priceLte = $this->get('lte',true);
         $priceGte = $this->get('gte', true);
         $orderBy = $this->get('orderby', true);
-        $start = $this->get('start');
-        $limit = $this->get('limit');
-        $products = $this->Product_model->searchProduct($query, $categoryID, $shopID, $priceGte, $priceLte, $orderBy,$start, $limit);
-        $this->response($products,200);
+        $start = $this->get('start',true);
+        $limit = $this->get('limit',true);
+        $products = $this->Product_model->searchProduct($query,true, $categoryID, $shopID, $priceGte, $priceLte, $orderBy, $start, $limit);
+        if ($products == 0) {
+            $query = $this->convert_vi_to_en($query);
+            $products = $this->Product_model->searchProduct($query, false, $categoryID, $shopID, $priceGte, $priceLte, $orderBy, $start, $limit);
+        }
+        $this->response($products,200); 
+    }
+
+    /**
+     * Convert vietnamese to english
+     * 
+     * @param $string
+     * @return string
+     */
+    public function convert_vi_to_en($str) {
+        $str = preg_replace("/(à|á|ạ|ả|ã|â|ầ|ấ|ậ|ẩ|ẫ|ă|ằ|ắ|ặ|ẳ|ẵ)/", "a", $str);
+        $str = preg_replace("/(è|é|ẹ|ẻ|ẽ|ê|ề|ế|ệ|ể|ễ)/", "e", $str);
+        $str = preg_replace("/(ì|í|ị|ỉ|ĩ)/", "i", $str);
+        $str = preg_replace("/(ò|ó|ọ|ỏ|õ|ô|ồ|ố|ộ|ổ|ỗ|ơ|ờ|ớ|ợ|ở|ỡ)/", "o", $str);
+        $str = preg_replace("/(ù|ú|ụ|ủ|ũ|ư|ừ|ứ|ự|ử|ữ)/", "u", $str);
+        $str = preg_replace("/(ỳ|ý|ỵ|ỷ|ỹ)/", "y", $str);
+        $str = preg_replace("/(đ)/", "d", $str);
+        $str = preg_replace("/(À|Á|Ạ|Ả|Ã|Â|Ầ|Ấ|Ậ|Ẩ|Ẫ|Ă|Ằ|Ắ|Ặ|Ẳ|Ẵ)/", "A", $str);
+        $str = preg_replace("/(È|É|Ẹ|Ẻ|Ẽ|Ê|Ề|Ế|Ệ|Ể|Ễ)/", "E", $str);
+        $str = preg_replace("/(Ì|Í|Ị|Ỉ|Ĩ)/", "I", $str);
+        $str = preg_replace("/(Ò|Ó|Ọ|Ỏ|Õ|Ô|Ồ|Ố|Ộ|Ổ|Ỗ|Ơ|Ờ|Ớ|Ợ|Ở|Ỡ)/", "O", $str);
+        $str = preg_replace("/(Ù|Ú|Ụ|Ủ|Ũ|Ư|Ừ|Ứ|Ự|Ử|Ữ)/", "U", $str);
+        $str = preg_replace("/(Ỳ|Ý|Ỵ|Ỷ|Ỹ)/", "Y", $str);
+        $str = preg_replace("/(Đ)/", "D", $str);
+        $str = preg_replace("/(')/", "", $str);
+        //$str = str_replace(" ", "-", str_replace("&*#39;","",$str));
+        return $str;
     }
 }
 

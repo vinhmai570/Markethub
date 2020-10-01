@@ -66,20 +66,105 @@ class Product_model extends CI_Model {
         return $productByUser;
     }
 
-    public function updateLikeProduct($productID)
+    /**
+     * update like when user like a product or unlike product
+     * 
+     * @param $increase = true/false
+     */
+    public function updateLikeOrViewProduct($productID, $increase = true, $viewed = false)
     {
-        $this->db->select('total_like');
-        $this->db->where('product_id', $productID);
-        $total_like = $this->db->get('product')->row();
-        $total_like = $total_like->total_like+1;
-        $this->db->set('total_like',$total_like);
-        $this->db->where('product_id', $productID);
-        $this->db->update('product');
+        if ($viewed===true) {
+            $sql = "update product set total_like=total_like+1 where product_id=$productID ";
+        } else {
+            if ($increase==true) {
+                $sql = "update product set total_like=total_like+1 where product_id=$productID ";
+            } else {
+                $sql = "update product set total_like=total_like-1 where product_id=$productID ";
+            }
+        }
+        $this->db->query($sql);
         if (!$this->db->affected_rows()) {
             return 0; // id not found
         } else {
             return 1; // success
         }
+    }
+
+    public function insertUserLikeOrView($userID, $productID, $viewed = false)
+    {
+        $this->db->select('*');
+        $this->db->where('user_id', $userID);
+        $this->db->where('product_id', $productID);
+        $date = date("Y-m-d h:i:sa");
+        if ($viewed===true) {
+            $userView = $this->db->get('user_view');
+            if ($userView->num_rows()>0) {
+                return 0;
+            }
+            $data = array(
+                'user_id' => $userID,
+                'product_id' => $productID,
+                'viewed_at' => $date
+            );
+            $this->db->insert('user_view', $data);
+            return $this->db->insert_id();
+        }
+        $userLike = $this->db->get('user_like');
+        if ($userLike->num_rows()>0) {
+            return 0;
+        }
+        $data = array(
+            'user_id' => $userID,
+            'product_id' => $productID,
+            'liked_at' => $date
+        );
+        $this->db->insert('user_like', $data);
+        return $this->db->insert_id();
+    }
+
+    public function deleteUserLikeOrView($userID, $productID, $viewed = false)
+    {
+        
+        $this->db->select('*');
+        $this->db->where('user_id', $userID);
+        $this->db->where('product_id', $productID);
+        if ($viewed===true) {
+            $this->db->delete('user_view');
+        } else {
+            $this->db->delete('user_like');
+        }
+        if (!$this->db->affected_rows()) {
+            return 0; // id not found
+        } else {
+            return 1; // success
+        }    
+    }
+
+    public function getProductsLikedOrViewed($userID,$viewed = false)
+    {
+        $this->db->select('product_id');
+        $this->db->where('user_id',$userID);
+        if ($viewed===true) {
+            $this->db->order_by('viewed_at', 'DESC');            
+            $products = $this->db->get('user_view');
+        } else {
+            $this->db->order_by('liked_at', 'DESC');            
+            $products = $this->db->get('user_like');
+        }
+        $data = array();
+        if ($products) {
+            $products =  $products->result_array();
+            foreach ($products as $key => $product) {
+                // var_dump();
+                if ($product) {
+                    array_push($data,$this->getProductByID($product['product_id']));
+                }
+            }
+        }
+        if ($data) {
+            return $data;
+        }
+        return 0;
     }
 
     /**
@@ -147,23 +232,29 @@ class Product_model extends CI_Model {
             return 1; // success
         }
     }
-    public function searchProduct($query, $categoryID = null, $shopID = null, $priceGte = null, $priceLte = null, $orderBy = null, $start = null, $limit = null)
+    public function searchProduct($query, $searchBinary = false, $categoryID = null, $shopID = null, $priceGte = null, $priceLte = null, $orderBy = null, $start = null, $limit = null)
     {
-        $sql = "SELECT product_id, product_name, price, product.category_id, short_description, discount, product.avatar, total_like, rate, user.user_name,product.user_id, total_order, update_date FROM product, user, category 
-        where product_name like binary '%$query%' ";
-        
+        $query .="%";
+        $query ="%".$query;
+        $sql = "SELECT product_id, product_name, price, product.category_id, short_description, discount, product.avatar, total_like, rate, user.user_name,product.user_id, total_order, product.update_date FROM product, user, category 
+        where product_name ";
+        if ($searchBinary == true) {
+            $sql = $sql."like binary ".$this->db->escape($query);
+        } else {
+            $sql = $sql."like ".$this->db->escape($query);
+        }
         if ($categoryID) {
-            $sql.="and product.category_id=$categoryID ";
+            $sql.=" and product.category_id=".$this->db->escape($categoryID);
         }
         if ($shopID) {
-            $sql.="and product.user_id=$shopID ";
+            $sql.=" and product.user_id=".$this->db->escape($shopID);
         }
-        $sql .= "and product.category_id=category.category_id and product.user_id=user.user_id ";
+        $sql .= " and product.category_id=category.category_id and product.user_id=user.user_id ";
         if ($priceLte) {
             if ($priceGte) {
-                $sql .= "and price between $priceGte and $priceLte ";
+                $sql .= "and price between ".$this->db->escape($priceGte)." and ". $this->db->escape($priceLte);
             } else {
-                $sql .= "and price <=$priceLte ";
+                $sql .= "and price <=$this->db->escape($priceLte) ";
             }
         }
         if ($orderBy) {
@@ -178,15 +269,24 @@ class Product_model extends CI_Model {
                 $sql .= "order by total_order desc ";
             }
             if ($start && $limit) {
-                $sql .= " LIMIT $start,$limit ";
+                if (is_numeric($start) && is_numeric($limit)) {
+                    $sql .= " LIMIT $start,$limit ";
+                }
             }
             return $this->db->query($sql)->result_array();
         }
         $sql .= " order by total_order desc ";
         if ($start && $limit) {
-            $sql .= " LIMIT $start,$limit ";
+            if (is_numeric($start) && is_numeric($limit)) {
+                $sql .= " LIMIT $start,$limit ";
+            }
         }
-        return $this->db->query($sql)->result_array();
+        $products = $this->db->query($sql);
+        if ($products->num_rows()<10 && $searchBinary==false) {
+            return 0;
+        } else {
+            return $products->result_array();
+        }
     }
 }
 
