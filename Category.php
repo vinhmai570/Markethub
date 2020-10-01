@@ -65,6 +65,7 @@ class Category extends RestController {
                 $category_Banner = $this->post('banner');
                 $category_UserID = $this->post('user_id');
                 $category_Parent_ID = $this->post('parent_id');
+                $category_Status = $this->post('status');
                 $createDate = $updateDate= date("Y-m-d h:i:sa");
                 //checking name already exists then to show error
                 $que=$this->db->query("select * from category where name='$category_Name'");
@@ -83,6 +84,7 @@ class Category extends RestController {
                                 'banner' => $category_Banner,
                                 'user_id' => $category_UserID,
                                 'parent_id' => $category_Parent_ID,
+                                'status' => $category_Status,
                                 'create_date' => $createDate,
                                 'update_date' => $createDate 
                             );
@@ -230,7 +232,7 @@ class Category extends RestController {
 
                 if($checkAuth == true) 
                 {  
-                    $que=$this->db->query("select * from category where category_id = $id and parent_id != 0");
+                    $que=$this->db->query("select * from category as cate where $id = cate.category_id and (select count(*) from category as cate1 where cate.category_id = cate1.parent_id) > 0");
                     $row = $que->num_rows();
                     if($row>0)
                     {
