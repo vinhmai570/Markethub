@@ -23,7 +23,7 @@ class Voucher_model extends CI_Model {
 
     public function getVoucherByID($id)
     {
-        $this->db->select('voucher_id, voucher_code, voucher_name, discount, user_id, expiration, create_date');
+        $this->db->select('*');
         $this->db->from('voucher');
         $this->db->where('voucher_id',$id);
         $this->db->join('user', 'user.user_id = voucher.user_id');
@@ -59,6 +59,15 @@ class Voucher_model extends CI_Model {
         } else {
             return 1; // success
         }
+    }
+
+
+    function DeleteExpriredVoucher()
+    {
+        $this->db->select('*');
+        $this->db->from('voucher');
+        $this->db->where('DATEDIFF(CURDATE(), voucher.update_date) >= voucher.expiration or quantity <= 0');
+        $this->db->delete('voucher');
     }
 
 }

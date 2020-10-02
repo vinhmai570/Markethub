@@ -7,17 +7,6 @@ use chriskacerguis\RestServer\RestController;
 
 class Voucher extends RestController {
 
-    // public function autoSetStatusVoucher()
-    // {
-    //     $sql = "select voucher.voucher_id, voucher.status, voucher.create_date, voucher.expiration from voucher";
-    //     $VoucherSQL = $this->Voucher_model->getVoucherSQL($sql);
-    //     json_decode($VoucherSQL, true);
-    // } //set status equal 0 if that vote exprired
-
-    // public function autoDeleteVoucherExprired()
-    // {
-
-    // }//delete vouchers have status 0
 
     function __construct()
     {
@@ -25,6 +14,7 @@ class Voucher extends RestController {
         $this->load->model('Voucher_model');
         $this->auth = new Auth();
     }
+   
 
     public function randomString($length) {
         $keys = array_merge(range(0,9), range('a', 'z'));
@@ -41,6 +31,7 @@ class Voucher extends RestController {
         if($voucher) {
             $this->response($voucher, 200);
         } 
+        
     }
 
     public function id_get($id)
@@ -62,7 +53,8 @@ class Voucher extends RestController {
                 $voucher_Code = strtoupper($this->randomString(8));
                 $voucher_Name = $this->post('voucher_name'); 
                 $voucher_discount = $this->post('discount');
-                $voucher_UserID = $this->post('user_id');
+                $quantity = $this->post('quantity'); 
+                $voucher_ShopID = $this->post('shop_id');
                 $voucher_Expiration = $this->post('expiration');
                 $status = 1;
                 $createDate = $updateDate= date("Y-m-d h:i:sa");
@@ -77,12 +69,13 @@ class Voucher extends RestController {
                         );
                         $this->response($message,200);
                     } else {  //if not already exists, then running code bellow
-                        if($voucher_Name !='' && $voucher_UserID!='' && $voucher_Code!='' &&$voucher_discount!='') {
+                        if($voucher_Name !='' && $voucher_ShopID!='' && $voucher_Code!='' &&$voucher_discount!='') {
                             $voucher = array(
-                                'voucher_code' => $voucher_Code,
+                               'voucher_code' => $voucher_Code,
                                 'voucher_name'=> $voucher_Name,
                                 'discount' => $voucher_discount,
-                                'user_id' => $voucher_UserID,
+                                'quantity' => $quantity,
+                                'shop_id' => $voucher_ShopID,
                                 'expiration'=> $voucher_Expiration,
                                 'status' => $status,
                                 'create_date' => $createDate,
@@ -90,6 +83,7 @@ class Voucher extends RestController {
                             );
                             if ($this->Voucher_model->insertVoucher($voucher))
                             {
+                                //$this->Voucher_model->DeleteExpriredVoucher();
                                 $message = array(
                                     'status' => true,
                                     'message' => 'Success'
@@ -129,7 +123,7 @@ class Voucher extends RestController {
 
     public function updateVoucher_put()
     {
-        $id= $this->put('id');
+        $id= $this->put('voucher_id');
         if ($id!='') 
         {
             $getPermission = $this->auth->checkPermission();
@@ -148,7 +142,8 @@ class Voucher extends RestController {
                     
                     $voucher_Name = $this->put('voucher_name'); 
                     $voucher_discount = $this->put('discount');
-                    $voucher_UserID = $this->put('user_id');
+                    $quantity = $this->put('quantity');
+                    $voucher_ShopID = $this->put('shop_id');
                     $voucher_Expiration = $this->put('expiration');
                     $status = $this->put('status');
                     $updateDate= date("Y-m-d h:i:sa");
@@ -164,13 +159,14 @@ class Voucher extends RestController {
                         );
                         $this->response($message,200);
                     } else {  //if not already exists, then running code bellow
-                        if($voucher_Name !='' && $voucher_UserID!='' &&$voucher_discount !='') {
+                        if($voucher_Name !='' && $voucher_ShopID!='' &&$voucher_discount !='') {
                             $voucher = array(
                                 'voucher_name'=> $voucher_Name,
                                 'discount' => $voucher_discount,
-                                'user_id' => $voucher_UserID,
+                                'quantity' => $quantity,
+                                'shop_id' => $voucher_ShopID,
                                 'expiration'=> $voucher_Expiration,
-                                '$status' => $status,
+                                'status' => $status,
                                 'update_date' => $updateDate
                             );
                             if ($this->Voucher_model->updateVoucher($voucher, $id)) {
@@ -271,7 +267,6 @@ class Voucher extends RestController {
         }
     }
 
-    //public function 
 }
 /* End of file Controllername.php */
 ?>
