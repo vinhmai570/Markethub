@@ -69,16 +69,18 @@ class User extends RestController {
         }
 
         if($checkAuth == true) {                                // confirmed
-            $UserByID = $this->User_model->getUserByID($userID);
+            $UserByID = $this->User_model->getUsers($userID);
             $this->response($UserByID,200);
         } else {                                 // not access
             $message = array(
                 'status' => false,
                 'message' => 'Authorization'
             );
-            $this->response($message,406);
+            $this->response($message,401);
         }
     }
+
+
 
      /**
     * Insert user from Client
@@ -94,23 +96,23 @@ class User extends RestController {
         
         $validatePhone = $this->validatePhone($phone);
         if ($validatePhone['status']===false) {
-            $this->response($validatePhone, 400);
+            $this->response($validatePhone, 200);
             return 0;
         }
 
         $validateEmail = $this->validateEmail($email);
         if ($validateEmail['status']===false) {
-            $this->response($validateEmail, 400);
+            $this->response($validateEmail, 200);
             return 0;
         }
         $validatePassword = $this->validatePassword($password);
         if ($validatePassword['status'] === false) {                 
-            $this->response($validatePassword, 400);
+            $this->response($validatePassword, 200);
             return 0;
         }
         $validateUserName = $this->validateUsername($name);
         if ($validateUserName['status'] === false) {
-            $this->response($validateUserName, 400);
+            $this->response($validateUserName, 200);
             return 0;
         }
         
@@ -138,14 +140,14 @@ class User extends RestController {
                             'status' => false,
                             'message' => 'Đăng kí thất bại'
                         );
-                        $this ->response($message,400);
+                        $this ->response($message,200);
                     }
                 } else {
                     $message = array(
                         'status' => false,
                         'message' => 'Vui lòng nhập đủ các trường'
                     );
-                    $this->response($message,400);
+                    $this->response($message,200);
                 }
             } else {
                 $message = array(
@@ -170,27 +172,27 @@ class User extends RestController {
                             'status' => true,
                             'message' => 'Đăng kí thành công, vui lòng xác nhận email'
                         );
-                        $this->response($message,201);
+                        $this->response($message,200);
                     } else {
                         $message = array(
                             'status' => false,
                             'message' => 'Đăng kí thất bại'
                         );
-                        $this ->response($message,400);
+                        $this ->response($message,200);
                     }
                 } else {
                     $message = array(
                         'status' => false,
                         'message' => 'Đăng kí thất bại'
                     );
-                    $this->response($message,400);
+                    $this->response($message,200);
                 }
             } else {
                 $message = array(
                     'status' => false,
                     'message' => 'Please enter full information!'
                 );
-                $this->response($message,400);
+                $this->response($message,200);
             }
         }
     }
@@ -233,7 +235,7 @@ class User extends RestController {
                     'status' => false,
                     'message' => 'Email not exist'
                 );
-                $this->response($message,400);
+                $this->response($message,200);
             }
         }
     }
@@ -271,7 +273,7 @@ class User extends RestController {
         if ($phone) {                   
             $validatePhone = $this->validatePhone($phone);
             if ($validatePhone['status']===false) {
-                $this->response($validatePhone, 400);
+                $this->response($validatePhone, 200);
                 return 0;
             }
         }
@@ -279,7 +281,7 @@ class User extends RestController {
         if ($email) {
             $validateEmail = $this->validateEmail($email);
             if ($validateEmail['status']===false) {
-                $this->response($validateEmail, 400);
+                $this->response($validateEmail, 200);
                 return 0;
             }
         }
@@ -312,7 +314,7 @@ class User extends RestController {
                     'status' => false,
                     'message' => 'Vui lòng nhập đầy đủ thông tin'
                 );
-                $this->response($message,400);
+                $this->response($message,200);
             }
         }
     }
@@ -336,7 +338,7 @@ class User extends RestController {
                     'status' => false,
                     'message' => 'Vui lòng nhập đủ thông tin'
                 ); 
-                $this->response($message, 400);
+                $this->response($message, 200);
                 return 0;
             }
             $userID = $getPermission['user_id'];
@@ -344,7 +346,7 @@ class User extends RestController {
             if (md5($password) == $user->password) {            // confirm user
                 $validatePassword = $this->validatePassword($newPassword);
                 if ($validatePassword['status'] === false) {                   // check length password
-                    $this->response($validatePassword, 400);
+                    $this->response($validatePassword, 200);
                     return 0;
                 } else {
                     if ($this->User_model->updatePassword($userID, $newPassword))  {
@@ -366,6 +368,32 @@ class User extends RestController {
             $message = array(
                 'status' => false,
                 'message' => 'Authorization failed'
+            );
+            $this->response($message,401);
+        }
+    }
+
+    public function delete_delete()
+    {
+        $user = $this->auth->checkPermission();
+        if ($user['user_id']) {
+            if ($this->User_model->deleteUserByID($user['user_id'])) {
+                $message = array(
+                    'status' => true,
+                    'message' => 'Delete Success'
+                );
+                $this->response($message,200);
+            } else {
+                $message = array(
+                    'status' => false,
+                    'message' => 'Error'
+                );
+                $this->response($message,200);
+            }
+        } else {
+            $message = array(
+                'status' => false,
+                'message' => 'UnAuthorization'
             );
             $this->response($message,401);
         }
@@ -525,7 +553,7 @@ class User extends RestController {
                     'status' => false,
                     'message' => 'Lỗi'
                 );
-                $this->response($message,400);
+                $this->response($message,200);
             }
         } else {
             $message = array(
@@ -533,6 +561,9 @@ class User extends RestController {
                 'message' => 'UnAuthorization'
             );
             $this->response($message,401);
+        }
+        foreach ($variable as $key => $value) {
+            # code...
         }
     }
 }

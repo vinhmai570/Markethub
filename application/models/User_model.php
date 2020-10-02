@@ -89,9 +89,13 @@ class User_model extends CI_Model {
 
 
     //get total property user
-    public function getUsers()
+    public function getUsers($id = null)
     {
-        $this->db->select('*');
+        $this->db->select('user_name, user_id, email, phone, address, group_id, avatar, active ');
+        if ($id) {
+            $this->db->where('user_id', $id);
+            return $this->db->get('user')->row();
+        }
         $users = $this->db->get('user');
         if($users->num_rows() > 0){
             return $users->result_array();
@@ -119,7 +123,7 @@ class User_model extends CI_Model {
 
     public function getUserByID($id)
     {
-        $this->db->select('user_name, email, phone, address, group_id ');
+        $this->db->select('user_name, email, phone,password , address, group_id ');
         $this->db->from('user');
         $this->db->where('user_id',$id);
         $userByID = $this->db->get();
@@ -164,6 +168,17 @@ class User_model extends CI_Model {
         if ($this->db->error()['message']) {
             return 0; // error
         } else if (!$this->db->affected_rows()) {
+            return 0; // id not found
+        } else {
+            return 1;
+        }
+    }
+
+    public function deleteUserByID($userID)
+    {
+        $this->db->where('user_id', $userID);
+        $this->db->delete('user');
+        if (!$this->db->affected_rows()) {
             return 0; // id not found
         } else {
             return 1;

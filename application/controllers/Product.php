@@ -132,7 +132,7 @@ class Product extends RestController {
                                 'status' => true,
                                 'message' => 'Success'
                             );
-                            $this->response($message,201);
+                            $this->response($message,200);
                         } else{
                             $message = array(
                                 'status' => false,
@@ -196,7 +196,7 @@ class Product extends RestController {
                                 'status' => false,
                                 'message' => 'Update ERROR'
                             );
-                            $this->response($message,400);
+                            $this->response($message,200);
                         }
                     }
                 } else {
@@ -401,7 +401,7 @@ class Product extends RestController {
                             'status' => false,
                             'message' => 'Vui lòng nhập đầy đủ thông tin!'
                         );
-                        $this->response($message,400);
+                        $this->response($message,200);
                     }
                 } else {                                 // not access
                     $message = array(
@@ -461,7 +461,7 @@ class Product extends RestController {
                             'status' => false,
                             'message' => 'Error'
                         );
-                        $this->response($message,400);
+                        $this->response($message,200);
                     } else {
                         $message = array(
                             'status' => false,
@@ -517,7 +517,7 @@ class Product extends RestController {
                             'status' => false,
                             'message' => 'Error'
                         );
-                        $this->response($message,400);
+                        $this->response($message,200);
                     } else {
                         $message = array(
                             'status' => false,

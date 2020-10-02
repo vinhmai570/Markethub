@@ -64,7 +64,7 @@ class Order extends RestController {
                         'status' => true,
                         'message' => "Đặt hàng thành công"
                     );
-                    $this->response($message, 201);         
+                    $this->response($message, 200);         
                 }
             } else {
                     $message = array(
@@ -200,7 +200,7 @@ class Order extends RestController {
                         'status' => false,
                         'message' => 'error'
                     );
-                    $this->response($message,400);
+                    $this->response($message,200);
                 }
             } else {                                 // not access
                 $message = array(
@@ -261,20 +261,20 @@ class Order extends RestController {
                             'status' => false,
                             'message' => 'Sản phẩm đã xác nhận không thể xóa'
                         );
-                        $this->response($message,400);
+                        $this->response($message,200);
                     } else {
                         $message = array(
                             'status' => false,
                             'message' => 'Error'
                         );
-                        $this->response($message,400);
+                        $this->response($message,200);
                     }
                 } else {
                     $message = array(
                         'status' => false,
                         'message' => 'Error'
                     );
-                    $this->response($message,400);
+                    $this->response($message,200);
                 }                    
             } else {                                 // not access
                 $message = array(

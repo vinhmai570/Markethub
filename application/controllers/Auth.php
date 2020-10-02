@@ -41,6 +41,7 @@ class Auth extends RestController {
                 $date = new DateTime();
                 $token['expiration'] = $date->getTimestamp() + 60*60*24*7;// expiration = 7 day
                 $token['group_id']=$val->group_id;
+                $output['status'] = true;
                 $output['token'] = $this->objOfJwt->GenerateToken($token);
                 $output['username']= $val->user_name;
                 $output['email'] = $val->email;
@@ -77,7 +78,7 @@ class Auth extends RestController {
                     'status' => false,
                     'message' => "Auth Failed"
                 );
-                $this->response($message,400);
+                $this->response($message,200);
             } else {
                 $message = array(
                     'status' => true,
@@ -116,6 +117,32 @@ class Auth extends RestController {
                 'message' => "Auth Failed"
             );
             return 0;
+        }
+    }
+
+    public function getMyInformation_get()
+    {
+        $token = isset($this->input->request_headers('Authorization')['Authorization'])?$this->input->request_headers('Authorization')['Authorization']:0; // get token in header
+        if ($token) {
+            $token = $this->objOfJwt->DecodeToken($token);
+            $now = new DateTime();
+            $checkTime = $now->getTimestamp();
+            if ($checkTime > $token['expiration']) { // token expired
+                $message = array(
+                    'status' => false,
+                    'message' => "Auth Failed"
+                );
+                $this->response($message,200);
+            } else {
+                $user = $this->User_model->getUsers($token['id']);
+                $this->response($user, 200);
+            }
+        } else {
+            $message = array(
+                'status' => false,
+                'message' => "Token Not found"
+            );
+            $this->response($message, 200);
         }
     }
 
