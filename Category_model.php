@@ -30,10 +30,9 @@ class Category_model extends CI_Model {
 
     public function getCategoryByID($id)
     {
-        $this->db->select('category_id, name, banner, status, parent_id, user.user_name, create_date, update_date');
+        $this->db->select('category_id, name, banner, status, parent_id, create_date, update_date');
         $this->db->from('category');
         $this->db->where('category_id', $id);
-        $this->db->join('user', 'user.user_id = category.user_id');
         $categoryById = $this->db->get();
         $categoryById = $categoryById->result_array();
         return $categoryById;
@@ -42,10 +41,9 @@ class Category_model extends CI_Model {
     //get all information category and ignore status
     public function getCategoryParentID($id)
     {
-        $this->db->select('category_id, name, banner, status, parent_id, user.user_name, create_date, update_date');
+        $this->db->select('category_id, name, banner, status, parent_id, create_date, update_date');
         $this->db->from('category');
         $this->db->where('parent_id', $id);
-        $this->db->join('user', 'user.user_id = category.user_id');
         $categoryParentID = $this->db->get();
         if($categoryParentID->num_rows() > 0)
         {
@@ -55,11 +53,10 @@ class Category_model extends CI_Model {
 
     public function getCategoryStatusParentID($id)
     {
-        $this->db->select('category_id, name, banner, status, parent_id, user.user_name, create_date, update_date');
+        $this->db->select('category_id, name, banner, status, parent_id, create_date, update_date');
         $this->db->from('category');
         $this->db->where('parent_id', $id);
         $this->db->where('status', '1');
-        $this->db->join('user', 'user.user_id = category.user_id');
         $categoryStatusParentID = $this->db->get();
         if($categoryStatusParentID->num_rows() > 0)
         {
@@ -69,11 +66,10 @@ class Category_model extends CI_Model {
 
     public function getHomeCategory()
     {
-        $this->db->select('category_id, name, banner, status, parent_id, user.user_name, create_date, update_date');
+        $this->db->select('category_id, name, banner, status, parent_id , create_date, update_date');
         $this->db->from('category');
         $this->db->where('parent_id', '0');
         $this->db->where('status', '1');
-        $this->db->join('user', 'user.user_id = category.user_id');
         $categoryParentID = $this->db->get();
         if($categoryParentID->num_rows() > 0)
         {

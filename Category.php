@@ -1,3 +1,33 @@
+Skip to content
+Search or jump to…
+
+Pull requests
+Issues
+Marketplace
+Explore
+ 
+@NgocThach2000 
+vinhmai570
+/
+Markethub
+Private
+1
+00
+Code
+Issues
+Pull requests
+Actions
+Projects
+Security
+Insights
+Markethub/Category.php /
+@NgocThach2000
+NgocThach2000 update delete contronller
+Latest commit 6fe1d6a yesterday
+ History
+ 1 contributor
+286 lines (267 sloc)  11.4 KB
+  
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
@@ -63,7 +93,6 @@ class Category extends RestController {
                 {     
                 $category_Name = $this->post('name'); 
                 $category_Banner = $this->post('banner');
-                $category_UserID = $this->post('user_id');
                 $category_Parent_ID = $this->post('parent_id');
                 $category_Status = $this->post('status');
                 $createDate = $updateDate= date("Y-m-d h:i:sa");
@@ -82,7 +111,6 @@ class Category extends RestController {
                             $category = array(
                                 'name'=> $category_Name,
                                 'banner' => $category_Banner,
-                                'user_id' => $category_UserID,
                                 'parent_id' => $category_Parent_ID,
                                 'status' => $category_Status,
                                 'create_date' => $createDate,
@@ -148,7 +176,6 @@ class Category extends RestController {
                 {
                     $category_Name = $this->put('name'); 
                     $category_Banner = $this->put('banner');
-                    $category_UserID = $this->put('user_id');
                     $category_Status = $this->put('status');
                     $category_Parent_ID = $this->put('parent_id');
                     $updateDate= date("Y-m-d h:i:sa");
@@ -168,7 +195,6 @@ class Category extends RestController {
                             $category = array(
                                 'name'=> $category_Name,
                                 'banner' => $category_Banner,
-                                'user_id' => $category_UserID,
                                 'parent_id' => $category_Parent_ID,
                                 'status' => $category_Status,
                                 'update_date' => $updateDate
