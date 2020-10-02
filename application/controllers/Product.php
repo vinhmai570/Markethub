@@ -333,7 +333,7 @@ class Product extends RestController {
             $this->response($message,401);
         }
     }
-    
+
     /**
     * update product
     * 

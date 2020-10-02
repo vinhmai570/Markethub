@@ -78,6 +78,7 @@ class Order extends RestController {
                 'status' => false,
                 'message' => 'Authorization'
             );
+            $this->response($message, 401);
         }
         
     }

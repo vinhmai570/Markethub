@@ -169,6 +169,20 @@ class User_model extends CI_Model {
             return 1;
         }
     }
+
+    public function partnerRegistration($userID)
+    {
+        $this->db->where('user_id', $userID);
+        $this->db->set('group_id',2);
+        $this->db->update('user');
+        if ($this->db->error()['message']) {
+            return 0; // error
+        } else if (!$this->db->affected_rows()) {
+            return 0; // id not found
+        } else {
+            return 1;
+        }
+    }
 }
 
 /* End of file ModelName.php */

@@ -232,6 +232,7 @@ class Product_model extends CI_Model {
             return 1; // success
         }
     }
+
     public function searchProduct($query, $searchBinary = false, $categoryID = null, $shopID = null, $priceGte = null, $priceLte = null, $orderBy = null, $start = null, $limit = null)
     {
         $query .="%";
@@ -249,7 +250,7 @@ class Product_model extends CI_Model {
         if ($shopID) {
             $sql.=" and product.user_id=".$this->db->escape($shopID);
         }
-        $sql .= " and product.category_id=category.category_id and product.user_id=user.user_id ";
+        $sql .= " and product.user_id=user.user_id ";
         if ($priceLte) {
             if ($priceGte) {
                 $sql .= "and price between ".$this->db->escape($priceGte)." and ". $this->db->escape($priceLte);

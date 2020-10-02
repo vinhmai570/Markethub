@@ -509,6 +509,32 @@ class User extends RestController {
         );
         return $message; 
     }
+
+    public function partnerRegistration_patch()
+    {
+        $user = $this->auth->checkPermission();
+        if ($user['user_id']) {
+            if ($this->User_model->partnerRegistration($user['user_id'])) {
+                $message = array(
+                    'status' => true,
+                    'message' => 'Đăng kí thành công'
+                );
+                $this->response($message,200);    
+            } else {
+                $message = array(
+                    'status' => false,
+                    'message' => 'Lỗi'
+                );
+                $this->response($message,400);
+            }
+        } else {
+            $message = array(
+                'status' => false,
+                'message' => 'UnAuthorization'
+            );
+            $this->response($message,401);
+        }
+    }
 }
 
 /* End of file Controllername.php */
