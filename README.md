@@ -1,8 +1,11 @@
 # Markethub
 
 * **Documentation** - https://documenter.getpostman.com/view/11253705/TVRecVit
-* **Sample Call:**
+* **Install:**
 
-  ```terminal
-    composer install
-  ```
+```git
+git clone https://github.com/vinhmai570/Markethub
+```
+```terminal
+composer install
+```
