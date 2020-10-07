@@ -19,20 +19,86 @@ class Order extends RestController {
         
     }
     
+    // public function insertOrder_post()
+    // {
+    //     $token = $this->auth->getUserByToken();
+    //     if ($token) {
+    //         $userID = $token['id'];
+    //         $totalPrice = $this->post('totalPrice');
+    //         $totalProduct = $this->post('totalProduct'); // 
+    //         $productOrder = $this->post('productOrder');
+    //         $phone = $this->post('phone');
+    //         $address = $this->post('address');
+    //         $email = $this->post('email');
+    //         $orderDate = date("Y-m-d h:i:sa");
+    //         if ($userID!='' && $totalPrice!='' && $totalProduct!='' && $productOrder!='' && $phone!='' && $address !='') {
+    //             $productID = $productOrder[0]['productID'];             
+    //             $product = $this->Order_model->getProductByID($productID); // get product then get shop_id
+    //             $shopID = $product->user_id;
+    //             $order = array(
+    //                 'user_id' => $userID,
+    //                 'shop_id' => $shopID,
+    //                 'total_price' => $totalPrice,
+    //                 'order_address' => $address,
+    //                 'order_phone' => $phone,
+    //                 'status' => 0,
+    //                 'order_date' => $orderDate
+    //             );
+    //             $orderID = $this->Order_model->insertOrder($order);
+    //             if ($orderID) {
+    //                 foreach ($productOrder as $key => $product) {
+    //                     $orderItem = array(
+    //                         'order_id' => $orderID,
+    //                         'product_id' => $product['productID'],
+    //                         'price' => $product['price'],
+    //                         'quantity' => $product['quantity'],
+    //                         'total_discount' => $product['total_discount']
+    //                     );  
+    //                     $this->Order_model->insertOrderItem($orderItem);
+    //                 }
+    //                 $productOrder = $this->Order_model->getProductByOrderID($orderID);
+    //                 foreach ($productOrder as $key => $product) {
+    //                     $this->Order_model->updateProductOrder($product['product_id'],$product['quantity']);
+    //                 }
+    //                 $message = array(
+    //                     'status' => true,
+    //                     'message' => "Đặt hàng thành công"
+    //                 );
+    //                 $this->response($message, 200);         
+    //             }
+    //         } else {
+    //                 $message = array(
+    //                     'status' => false,
+    //                     'message' => 'Order error'
+    //                 );
+    //                 $this->response($message, 404);
+    //             }
+    //     } else {
+    //         $message = array(
+    //             'status' => false,
+    //             'message' => 'Authorization'
+    //         );
+    //         $this->response($message, 401);
+    //     }
+        
+    // }
+
     public function insertOrder_post()
     {
         $token = $this->auth->getUserByToken();
         if ($token) {
             $userID = $token['id'];
-            $totalPrice = $this->post('totalPrice');
-            $totalProduct = $this->post('totalProduct'); // 
-            $productOrder = $this->post('productOrder');
-            $phone = $this->post('phone');
-            $address = $this->post('address');
-            $email = $this->post('email');
+            $totalPrice = $this->post('totalPrice', true);
+            $totalProduct = $this->post('totalProduct', true); // 
+            $productOrder = $this->post('productOrder', true);
+            $phone = $this->post('phone', true);
+            $address = $this->post('address', true);
+            $email = $this->post('email', true);
+            $voucher = $this->post('voucher', true);
             $orderDate = date("Y-m-d h:i:sa");
-            if ($userID!='' && $totalPrice!='' && $totalProduct!='' && $productOrder!='' && $phone!='' && $address !='') {
-                $productID = $productOrder[0]['productID'];             
+            
+            if ($userID!='' && $totalPrice!='' && $totalProduct!='' && $productOrder!='' && $phone!='' && $address !='') {  
+                $productID = $productOrder[0]['productID'];  
                 $product = $this->Order_model->getProductByID($productID); // get product then get shop_id
                 $shopID = $product->user_id;
                 $order = array(
@@ -42,17 +108,21 @@ class Order extends RestController {
                     'order_address' => $address,
                     'order_phone' => $phone,
                     'status' => 0,
+                    'voucher'=> $voucher,
                     'order_date' => $orderDate
                 );
                 $orderID = $this->Order_model->insertOrder($order);
                 if ($orderID) {
+                    if ($voucher!=null && $voucher !='') {
+                        $voucherInfo = $this->handleVoucher_post(false, $shopID, $voucher);
+                    }
                     foreach ($productOrder as $key => $product) {
                         $orderItem = array(
                             'order_id' => $orderID,
                             'product_id' => $product['productID'],
                             'price' => $product['price'],
                             'quantity' => $product['quantity'],
-                            'total_discount' => $product['total_discount']
+                            'total_discount' => $voucherInfo?$voucherInfo->discount:0
                         );  
                         $this->Order_model->insertOrderItem($orderItem);
                     }
@@ -64,23 +134,137 @@ class Order extends RestController {
                         'status' => true,
                         'message' => "Đặt hàng thành công"
                     );
-                    $this->response($message, 200);         
+                    $this->response($message, 201);         
                 }
             } else {
-                    $message = array(
-                        'status' => false,
-                        'message' => 'Order error'
-                    );
-                    $this->response($message, 404);
-                }
+                $message = array(
+                    'status' => false,
+                    'message' => 'Order error'
+                );
+                $this->response($message, 404);
+            }
         } else {
             $message = array(
                 'status' => false,
                 'message' => 'Authorization'
             );
-            $this->response($message, 401);
+            $this->response($message, 200);
         }
-        
+    }
+
+    public function getBill_post()
+    {
+        $token = $this->auth->getUserByToken();
+        if ($token) {
+            $userID = $token['id'];
+            $totalPrice = $this->post('totalPrice', true);
+            $totalProduct = $this->post('totalProduct', true); // 
+            $productOrder = $this->post('productOrder', true);
+            $phone = $this->post('phone', true);
+            $address = $this->post('address', true);
+            $email = $this->post('email', true);
+            $voucher = $this->post('voucher', true);
+            $orderDate = date("Y-m-d h:i:sa");
+
+            if ($userID!='' && $totalProduct!='' && $productOrder!='' && $phone!='' && $address !='') {  
+                $productID = $productOrder[0]['productID'];  
+                $product = $this->Order_model->getProductByID($productID); // get product then get shop_id
+                $shopID = $product->user_id;
+            
+                if ($voucher!=null && $voucher !='') {
+                    $voucherInfo = $this->handleVoucher_post(false, $shopID, $voucher);
+                }
+                $totalPrice = 0;
+                foreach ($productOrder as $key => $product) {
+                    $orderItem = array(
+                        'order_id' => $orderID,
+                        'product_id' => $product['productID'],
+                        'price' => $product['price'],
+                        'quantity' => $product['quantity'],
+                        'total_discount' => $voucherInfo?$voucherInfo->discount:0
+                    );  
+                    $productServer = $this->Order_model->getProductByID($product['productID']); // get product then get shop_id
+                    $nowPrice = ($productServer->price - $productServer->price*$productServer->discount/100);
+                    if ($voucherInfo) {
+                        $nowPrice = ($nowPrice - $nowPrice*$voucherInfo['discount']/100);
+                    }
+                    $totalPrice = $totalPrice + $nowPrice*$product['quantity'];
+                }   
+
+                $message = array(
+                    'status' => true,
+                    'price'  => round($totalPrice,-2)
+                );
+                $this->response($message, 200);         
+            } else {
+                $message = array(
+                    'status' => false,
+                    'message' => 'Error'
+                );
+                $this->response($message, 404);
+            }
+            // 296528
+        }       
+    }
+
+    public function handleVoucher_post($print = true, $shopID = null, $voucher = null)
+    {
+        $voucher = $voucher?$voucher:$this->post('voucher');
+        $shopID = $shopID?$shopID:$this->post('shopID');
+        if($voucher!=''){
+            $checkCodeVoucher = "select * from voucher where voucher_code = '$voucher'";
+            $que = $this->db->query($checkCodeVoucher);
+            $row = $que->num_rows();
+            if($row < 1){
+                $message = array(
+                    'status' => false,
+                    'message' => 'Voucher không tồn tại'
+                );
+                $this->response($message,200);
+            } else {
+                $VoucherRow = $que->row();
+                $idVoucher = $VoucherRow->voucher_id;
+                $checkExprireVoucher = "select * from voucher where $idVoucher = voucher_id and (DATEDIFF(CURDATE(), voucher.update_date) >= voucher.expiration or quantity <= 0)";
+                $checkShopVoucher = "select * from voucher where $idVoucher = voucher_id and shop_id != $shopID";
+
+                $que02 = $this->db->query($checkExprireVoucher);
+                $row02 = $que02->num_rows();
+
+                $que03 = $this->db->query($checkShopVoucher);
+                $row03 = $que03->num_rows();
+
+                if($row02 > 0){
+                    $message = array(
+                        'status' => false,
+                        'message' => 'Voucher hết hạn'
+                    );
+                    $this->response($message,200);
+                    return 0;
+                } else {
+                    if($row03 > 0){
+                        $message = array(
+                            'status' => false,
+                            'message' => 'Voucher không hợp lệ',
+                        );
+                        $this->response($message,200);
+                        return 0;
+                    }
+                }
+                $infoVoucher = $que->row();
+                $infoVoucher->status = true;
+                if ($print === true) {
+                    $this->response($infoVoucher,200);
+                } else {
+                    return $infoVoucher;
+                }
+            }
+        } else {
+            $message = array(
+                'status' => false,
+                'message' => 'Voucher không hợp lệ',
+            );
+            $this->response($message,200);
+        }
     }
 
     public function orders_get()

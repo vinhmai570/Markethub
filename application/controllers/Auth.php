@@ -80,9 +80,11 @@ class Auth extends RestController {
                 );
                 $this->response($message,200);
             } else {
+                $token['expiration']+=60*60*24*7;
+                $newToken =  $this->objOfJwt->GenerateToken($token);
                 $message = array(
                     'status' => true,
-                    'message' => "Success"
+                    'token' => $newToken
                 );
                 $this->response($message,200);
             }

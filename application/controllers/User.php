@@ -89,17 +89,24 @@ class User extends RestController {
     */
     public function register_post()
     {
-        $name = $this->post('user_name', true);
+        $fullName = $this->post('fullName', true);
+        $userName = $this->post('userName', true);
 		$email = $this->post('email', true);
 		$phone = $this->post('phone', true);
         $password = $this->post('password');
         
         $validatePhone = $this->validatePhone($phone);
         if ($validatePhone['status']===false) {
-            $this->response($validatePhone, 200);
             return 0;
         }
-
+        if (!$fullName) {
+            $message = array(
+                'status' => false,
+                'message' => 'Vui lòng nhập họ tên'
+            );
+            $this->response($message, 200);
+            return 0;
+        }
         $validateEmail = $this->validateEmail($email);
         if ($validateEmail['status']===false) {
             $this->response($validateEmail, 200);
@@ -110,25 +117,26 @@ class User extends RestController {
             $this->response($validatePassword, 200);
             return 0;
         }
-        $validateUserName = $this->validateUsername($name);
+        $validateUserName = $this->validateUsername($userName);
         if ($validateUserName['status'] === false) {
             $this->response($validateUserName, 200);
             return 0;
         }
-        
+        $password = md5($password);
         //checking email already exists then to show error
         $user = $this->User_model->getUserByEmail($email);
 		if ($user) {
 		    if ($user->active == 0) {
-                $users = array(
-                    'user_name'=> $name,
+                $user = array(
+                    'full_name' => $fullName,
+                    'user_name'=> $userName,
                     'email' => $email,
                     'phone' => $phone,
-                    'password' => md5($password),
+                    'password' => $password,
                     'group_id' => 3,
                     'active' => 0
                 );
-                if ($this->User_model->updateUserByEmail($users, $email)) {
+                if ($this->User_model->updateUserByEmail($user, $email)) {
                     if ($this->User_model->sendEmailVerify($email)) {
                         $message = array(
                             'status' => true,
@@ -157,16 +165,17 @@ class User extends RestController {
                 $this->response($message,406);
             }
         } else {//if not already exists, then running code bellow
-            if ($name!='' && $email!='' && $phone!='' && $password !='' ) {
-                $users = array(
-                    'user_name'=> $name,
+            if ($fullName != ''&& $userName!='' && $email!='' && $phone!='' && $password !='' ) {
+                $user = array(
+                    'full_name' => $fullName,
+                    'user_name'=> $userName,
                     'email' => $email,
                     'phone' => $phone,
                     'password' => $password,
                     'group_id' => 3,
                     'active' => 0
                 );
-                if ($this->User_model->register($users)) {
+                if ($this->User_model->register($user)) {
                     if ($this->User_model->sendEmailVerify($email)) {
                         $message = array(
                             'status' => true,
@@ -196,7 +205,6 @@ class User extends RestController {
             }
         }
     }
-
     /**
      * Verify email 
      * 
@@ -269,7 +277,7 @@ class User extends RestController {
 		$phone = $this->put('phone');
         $address = $this->put('address');
         $avatar = $this->put('avatar');
-
+    
         if ($phone) {                   
             $validatePhone = $this->validatePhone($phone);
             if ($validatePhone['status']===false) {
@@ -291,11 +299,30 @@ class User extends RestController {
 		if ($row>0) {
 		    $message = array(
                 'status' => false,
-                'message' => 'Email is already exists'
+                'message' => 'Email đã tồn tại'
             );
             $this->response($message,200);
         } else {
             if ($email!='' || $phone!='' || $address!='' || $avatar) {
+                if ($avatar) {
+                    $avatar = str_replace('data:image/png;base64,', '', $avatar);
+                    $avatar = str_replace(' ', '+', $avatar);
+                    $data = base64_decode($avatar);
+                    $imageName = md5(uniqid(rand(), true));     // random name image
+                    $filename = $imageName . '.png';
+                    $filePath = 'uploads/users/' .  $imageName . '.jpg';
+                    $success = file_put_contents($filePath, $data);
+                    if ($success) {
+                        $avatar = $filePath;
+                        $user = $this->User_model->getUserByUserName($username);
+                        if ($user->avatar) {
+                            if (file_exists(getcwd().'/'.$user->avatar))
+                            {
+                                unlink(getcwd().'/'.$user->avatar);
+                            }
+                        }
+                    }
+                }
                 if ($this->User_model->updateUser($username, $email, $phone, $address, $avatar)) {
                     $message = array(
                         'status' => true,

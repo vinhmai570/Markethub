@@ -94,7 +94,11 @@ class User_model extends CI_Model {
         $this->db->select('user_name, user_id, email, phone, address, group_id, avatar, active ');
         if ($id) {
             $this->db->where('user_id', $id);
-            return $this->db->get('user')->row();
+            $user = $this->db->get('user')->row();
+            $this->db->where('user_id', $user->user_id);
+            $this->db->from('product');
+            $user->total_product = $this->db->count_all_results();
+            return $user;
         }
         $users = $this->db->get('user');
         if($users->num_rows() > 0){
@@ -103,10 +107,10 @@ class User_model extends CI_Model {
              return 0; 
         }
     }
-    
+
     public function getUserByUsername($username)
     {
-        $this->db->select('user_name, user_id, email, phone, password, address, group_id, active ');
+        $this->db->select('user_name, user_id, email, phone, password, address, group_id,avatar, active ');
         $this->db->from('user');
         $this->db->where('user_name',$username);
         $this->db->or_where('email', $username);

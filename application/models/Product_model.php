@@ -38,7 +38,7 @@ class Product_model extends CI_Model {
 
     public function getProductByID($id)
     {
-        $this->db->select('product_id, product_name, price, category_id, short_description, long_description, discount, list_image, product.avatar, total_like, total_view, rate, user.user_name,user.user_id, update_date ');
+        $this->db->select('product_id, product_name, price, category_id, short_description, long_description, discount, list_image, product.avatar, total_like, total_view, rate, user.full_name,user.user_id, update_date ');
         $this->db->from('product');
         $this->db->where('product_id',$id);
         $this->db->join('user', 'user.user_id = product.user_id');
@@ -140,10 +140,11 @@ class Product_model extends CI_Model {
         }    
     }
 
-    public function getProductsLikedOrViewed($userID,$viewed = false)
+    public function getProductsLikedOrViewed($userID,$viewed = false, $start = null, $limit = null)
     {
         $this->db->select('product_id');
         $this->db->where('user_id',$userID);
+        $this->db->limit($limit, $start);
         if ($viewed===true) {
             $this->db->order_by('viewed_at', 'DESC');            
             $products = $this->db->get('user_view');
@@ -154,12 +155,22 @@ class Product_model extends CI_Model {
         $data = array();
         if ($products) {
             $products =  $products->result_array();
-            foreach ($products as $key => $product) {
-                // var_dump();
-                if ($product) {
-                    array_push($data,$this->getProductByID($product['product_id']));
-                }
+            // foreach ($products as $key => $product) {
+            //     // var_dump();
+            //     if ($product) {
+            //         array_push($data,$this->getProductByID($product['product_id']));
+            //     }
+            // }
+            // Perform get products
+            $productID = implode(', ', array_map(function ($product) {
+                return $product['product_id'];
+            }, $products));
+            // echo $productID;
+            if (count($products)) {
+                $data = $this->db->query("SELECT product_id, product_name, price, category_id, short_description, discount, product.avatar, total_like, rate, user.full_name,user.user_id, update_date  FROM product, user WHERE `product_id` IN (" .$productID." ) and user.user_id = product.user_id ORDER BY FIELD(product_id,$productID)");
+                $data=$data->result_array();
             }
+
         }
         if ($data) {
             return $data;

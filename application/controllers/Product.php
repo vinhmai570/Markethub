@@ -281,11 +281,7 @@ class Product extends RestController {
                 if($products) {
                     $this->response($products,200);
                 } else {
-                    $message = array(
-                        'status' => false,
-                        'message' => 'Chưa có sản phẩm nào'
-                    );
-                    $this->response($message,200);
+                    $this->response([],200);
                 }
             } else {
                 $message = array(
@@ -308,15 +304,14 @@ class Product extends RestController {
         $user = $this->auth->getUserByToken();
         if ($user) {
             if (isset($user['id'])) {
+                $start = $this->get('start');
+                $limit = $this->get('limit');
+                $products = $this->Product_model->getProductsLikedOrViewed($user['id'], true, $start, $limit);
                 $products = $this->Product_model->getProductsLikedOrViewed($user['id'], true);
                 if($products) {
                     $this->response($products,200);
                 } else {
-                    $message = array(
-                        'status' => false,
-                        'message' => 'Chưa có sản phẩm nào'
-                    );
-                    $this->response($message,200);
+                    $this->response([],200);
                 }
             } else {
                 $message = array(
