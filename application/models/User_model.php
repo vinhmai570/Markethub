@@ -140,9 +140,12 @@ class User_model extends CI_Model {
         return $this->db->delete('user');
     }
 
-    public function updateUser($username, $email = null, $phone = null, $address = null, $avatar = null)
+    public function updateUser($username, $fullName = null, $email = null, $phone = null, $address = null, $avatar = null)
     {
         $this->db->where('user_name', $username);
+        if ($fullName) {
+            $this->db->set('full_name', $fullName);
+        }
         if ($email) {
             $this->db->set('email', $email);
         }

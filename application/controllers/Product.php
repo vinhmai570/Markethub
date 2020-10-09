@@ -63,6 +63,18 @@ class Product extends RestController {
     }
 
     /**
+     * get all products by parent category (all child category)
+     * 
+     * @param - categoryID 
+     * 
+     */
+    public function parentCategory_get($parenCategory)
+    {
+        $productByCategory = $this->Product_model->getProductsByAllChildCategory($parenCategory);
+        $this->response($productByCategory,200);
+    }
+
+    /**
      * get product by userID
      * 
      * @param - userID
@@ -352,7 +364,6 @@ class Product extends RestController {
                         $checkAuth = true;
                     }
                 }
-
                 if($checkAuth == true) {                                // confirmed
                     $name = $this->put('name', true);
                     $price = $this->put('price');
@@ -401,14 +412,14 @@ class Product extends RestController {
                 } else {                                 // not access
                     $message = array(
                         'status' => false,
-                        'message' => 'Authorization'
+                        'message' => 'UnAuthorization'
                     );
                     $this->response($message,401);
                 }
             } else {                                    // not access
                 $message = array(
                     'status' => false,
-                    'message' => 'Authorization'
+                    'message' => 'UnAuthorization'
                 );
                 $this->response($message,401);
             }
@@ -570,6 +581,9 @@ class Product extends RestController {
         if ($products == 0) {
             $query = $this->convert_vi_to_en($query);
             $products = $this->Product_model->searchProduct($query, false, $categoryID, $shopID, $priceGte, $priceLte, $orderBy, $start, $limit);
+            if (count($products)==0) {
+                $products = $this->Product_model->searchProduct($query, false, $categoryID, $shopID, $priceGte, $priceLte, $orderBy, $start, $limit, true);
+            }
         }
         $this->response($products,200); 
     }

@@ -56,6 +56,32 @@ class Product_model extends CI_Model {
         return $productByCategory;
     }
 
+    public function getProductsByAllChildCategory($parentCategory)
+    {
+        $this->db->select('*');
+        $this->db->from('category');
+        $this->db->where('parent_id', $parentCategory);
+        $allCategoryChild = $this->db->get()->result_array();
+        if (count($allCategoryChild)>1) {
+            $childCategoryID = implode(', ', array_map(function ($categoryChild) {
+                return $categoryChild['category_id'];
+            }, $allCategoryChild));
+            if (count($childCategoryID)) {
+                $data = $this->db->query("SELECT product_id, product_name, price, category_id, short_description, discount, product.avatar, total_like, rate, user.full_name,user.user_id, update_date  FROM product, user WHERE `category_id` IN (" .$childCategoryID." ) and user.user_id = product.user_id ORDER BY total_order desc");
+                $data=$data->result_array();
+                return $data;
+            }
+        } else {
+            $this->db->select('product_id, product_name, price, category_id, short_description, long_description, discount, list_image, product.avatar, total_like, total_view, rate, user.user_name,user.user_id, update_date');
+            $this->db->where('category_id',$parentCategory);
+            $this->db->where('user.user_id = product.user_id');
+            $this->db->from('product, user');
+            $product = $this->db->get()->result_array();
+            return $product;
+        }
+        
+    }
+
     public function getProductByUser($userID)
     {
         $this->db->select('product_id, product_name, price, category_id, short_description, long_description, discount, list_image, product.avatar, total_like, total_view, rate, user.user_name,user.user_id, update_date ');
@@ -155,12 +181,7 @@ class Product_model extends CI_Model {
         $data = array();
         if ($products) {
             $products =  $products->result_array();
-            // foreach ($products as $key => $product) {
-            //     // var_dump();
-            //     if ($product) {
-            //         array_push($data,$this->getProductByID($product['product_id']));
-            //     }
-            // }
+
             // Perform get products
             $productID = implode(', ', array_map(function ($product) {
                 return $product['product_id'];
@@ -170,7 +191,6 @@ class Product_model extends CI_Model {
                 $data = $this->db->query("SELECT product_id, product_name, price, category_id, short_description, discount, product.avatar, total_like, rate, user.full_name,user.user_id, update_date  FROM product, user WHERE `product_id` IN (" .$productID." ) and user.user_id = product.user_id ORDER BY FIELD(product_id,$productID)");
                 $data=$data->result_array();
             }
-
         }
         if ($data) {
             return $data;
@@ -244,24 +264,29 @@ class Product_model extends CI_Model {
         }
     }
 
-    public function searchProduct($query, $searchBinary = false, $categoryID = null, $shopID = null, $priceGte = null, $priceLte = null, $orderBy = null, $start = null, $limit = null)
+    public function searchProduct($query, $searchBinary = false, $categoryID = null, $shopID = null, $priceGte = null, $priceLte = null, $orderBy = null, $start = null, $limit = null, $deleteSpace = false)
     {
         $query .="%";
         $query ="%".$query;
+        $query = strtoupper($query);
         $sql = "SELECT product_id, product_name, price, product.category_id, short_description, discount, product.avatar, total_like, rate, user.user_name,product.user_id, total_order, product.update_date FROM product, user, category 
-        where product_name ";
+        where";
         if ($searchBinary == true) {
-            $sql = $sql."like binary ".$this->db->escape($query);
+            $sql = $sql." UPPER(product_name) like binary ".strtoupper($this->db->escape($query));
         } else {
-            $sql = $sql."like ".$this->db->escape($query);
-        }
+            if ($deleteSpace == false) {
+                $sql = $sql." UPPER(product_name) like ".$this->db->escape($query);
+            } else {
+                $sql = $sql." UPPER(REPLACE(product_name,' ', '')) like ".str_replace(' ','',$this->db->escape($query));
+            }
+        } 
         if ($categoryID) {
             $sql.=" and product.category_id=".$this->db->escape($categoryID);
         }
         if ($shopID) {
             $sql.=" and product.user_id=".$this->db->escape($shopID);
         }
-        $sql .= " and product.user_id=user.user_id ";
+        $sql .= " and product.user_id=user.user_id and product.category_id=category.category_id ";
         if ($priceLte) {
             if ($priceGte) {
                 $sql .= "and price between ".$this->db->escape($priceGte)." and ". $this->db->escape($priceLte);
@@ -294,9 +319,10 @@ class Product_model extends CI_Model {
             }
         }
         $products = $this->db->query($sql);
-        if ($products->num_rows()<10 && $searchBinary==false) {
+        if ($products->num_rows()<10 && $searchBinary==true) {
             return 0;
         } else {
+           
             return $products->result_array();
         }
     }

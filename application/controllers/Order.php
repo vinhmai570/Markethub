@@ -11,6 +11,7 @@ class Order extends RestController {
     {
         parent::__construct();
         $this->load->model('Order_model');
+        $this->load->model('Cart_model');
         $this->auth = new Auth();
     }
 
@@ -18,93 +19,46 @@ class Order extends RestController {
     {
         
     }
-    
-    // public function insertOrder_post()
-    // {
-    //     $token = $this->auth->getUserByToken();
-    //     if ($token) {
-    //         $userID = $token['id'];
-    //         $totalPrice = $this->post('totalPrice');
-    //         $totalProduct = $this->post('totalProduct'); // 
-    //         $productOrder = $this->post('productOrder');
-    //         $phone = $this->post('phone');
-    //         $address = $this->post('address');
-    //         $email = $this->post('email');
-    //         $orderDate = date("Y-m-d h:i:sa");
-    //         if ($userID!='' && $totalPrice!='' && $totalProduct!='' && $productOrder!='' && $phone!='' && $address !='') {
-    //             $productID = $productOrder[0]['productID'];             
-    //             $product = $this->Order_model->getProductByID($productID); // get product then get shop_id
-    //             $shopID = $product->user_id;
-    //             $order = array(
-    //                 'user_id' => $userID,
-    //                 'shop_id' => $shopID,
-    //                 'total_price' => $totalPrice,
-    //                 'order_address' => $address,
-    //                 'order_phone' => $phone,
-    //                 'status' => 0,
-    //                 'order_date' => $orderDate
-    //             );
-    //             $orderID = $this->Order_model->insertOrder($order);
-    //             if ($orderID) {
-    //                 foreach ($productOrder as $key => $product) {
-    //                     $orderItem = array(
-    //                         'order_id' => $orderID,
-    //                         'product_id' => $product['productID'],
-    //                         'price' => $product['price'],
-    //                         'quantity' => $product['quantity'],
-    //                         'total_discount' => $product['total_discount']
-    //                     );  
-    //                     $this->Order_model->insertOrderItem($orderItem);
-    //                 }
-    //                 $productOrder = $this->Order_model->getProductByOrderID($orderID);
-    //                 foreach ($productOrder as $key => $product) {
-    //                     $this->Order_model->updateProductOrder($product['product_id'],$product['quantity']);
-    //                 }
-    //                 $message = array(
-    //                     'status' => true,
-    //                     'message' => "Đặt hàng thành công"
-    //                 );
-    //                 $this->response($message, 200);         
-    //             }
-    //         } else {
-    //                 $message = array(
-    //                     'status' => false,
-    //                     'message' => 'Order error'
-    //                 );
-    //                 $this->response($message, 404);
-    //             }
-    //     } else {
-    //         $message = array(
-    //             'status' => false,
-    //             'message' => 'Authorization'
-    //         );
-    //         $this->response($message, 401);
-    //     }
-        
-    // }
 
     public function insertOrder_post()
     {
         $token = $this->auth->getUserByToken();
         if ($token) {
             $userID = $token['id'];
-            $totalPrice = $this->post('totalPrice', true);
-            $totalProduct = $this->post('totalProduct', true); // 
-            $productOrder = $this->post('productOrder', true);
+            // $productOrder = $this->post('productOrder', true);
             $phone = $this->post('phone', true);
             $address = $this->post('address', true);
-            $email = $this->post('email', true);
             $voucher = $this->post('voucher', true);
             $orderDate = date("Y-m-d h:i:sa");
-            
-            if ($userID!='' && $totalPrice!='' && $totalProduct!='' && $productOrder!='' && $phone!='' && $address !='') {  
-                $productID = $productOrder[0]['productID'];  
+            $cart = $this->Cart_model->getCartByUserID($userID);
+            $totalOrder = count($cart);
+            $i=0;
+            if (!$phone||!$address){
+                $message = array(
+                    'status' => false,
+                    'message' => 'Vui lòng nhập đủ thông tin'
+                );
+                $this->response($message, 200);
+            }
+            if(!$cart){
+                $message = array(
+                    'status' => false,
+                    'message' => 'Chưa có sản phẩm nào trong giỏ hàng'
+                );
+                $this->response($message, 200);
+            }
+            foreach ($cart as $key => $cartItem) {
+                $productOrder = $cartItem['product'];
+                // var_dump($productOrder);
+                $productOrder = json_decode($productOrder);
+                $bill = $this->getBill_post($userID, $productOrder, $voucher, false);   // get bill return totalPrice + totalProduct
+                $productID = $productOrder[0]->productID;  
                 $product = $this->Order_model->getProductByID($productID); // get product then get shop_id
                 $shopID = $product->user_id;
                 $order = array(
                     'user_id' => $userID,
                     'shop_id' => $shopID,
-                    'total_price' => $totalPrice,
+                    'total_price' => $bill['price'],
                     'order_address' => $address,
                     'order_phone' => $phone,
                     'status' => 0,
@@ -117,12 +71,14 @@ class Order extends RestController {
                         $voucherInfo = $this->handleVoucher_post(false, $shopID, $voucher);
                     }
                     foreach ($productOrder as $key => $product) {
+                        $productServer = $this->Order_model->getProductByID($product->productID); // get product then get shop_id
+                        $price = $productServer->price-$productServer->price*$productServer->discount/100;
                         $orderItem = array(
                             'order_id' => $orderID,
-                            'product_id' => $product['productID'],
-                            'price' => $product['price'],
-                            'quantity' => $product['quantity'],
-                            'total_discount' => $voucherInfo?$voucherInfo->discount:0
+                            'product_id' => $product->productID,
+                            'price' => $price,
+                            'quantity' => $product->quantity,
+                            'total_discount' => isset($voucherInfo)?$voucherInfo->discount:0
                         );  
                         $this->Order_model->insertOrderItem($orderItem);
                     }
@@ -134,14 +90,18 @@ class Order extends RestController {
                         'status' => true,
                         'message' => "Đặt hàng thành công"
                     );
-                    $this->response($message, 201);         
+                    $i++;
+                    if($i==$totalOrder){
+                        $this->Cart_model->deleteAllCartItems($userID);
+                        $this->response($message, 201); 
+                    }
+                } else {
+                    $message = array(
+                        'status' => false,
+                        'message' => 'Order error'
+                    );
+                    $this->response($message, 404);
                 }
-            } else {
-                $message = array(
-                    'status' => false,
-                    'message' => 'Order error'
-                );
-                $this->response($message, 404);
             }
         } else {
             $message = array(
@@ -152,22 +112,25 @@ class Order extends RestController {
         }
     }
 
-    public function getBill_post()
+    /**
+     * Get bill from product
+     * 
+     * @param @userID       default null, if null: get userID from token
+     * @param $productOrder default null, if null: get productOrder from post request
+     * @param $voucher      default null, if null: get voucher from post request 
+     * @param $output       default true, if true: echo message, not return result
+     */
+    public function getBill_post($userID = null, $productOrder = null, $voucher = null, $output = true )
     {
         $token = $this->auth->getUserByToken();
         if ($token) {
-            $userID = $token['id'];
-            $totalPrice = $this->post('totalPrice', true);
-            $totalProduct = $this->post('totalProduct', true); // 
-            $productOrder = $this->post('productOrder', true);
-            $phone = $this->post('phone', true);
-            $address = $this->post('address', true);
-            $email = $this->post('email', true);
-            $voucher = $this->post('voucher', true);
-            $orderDate = date("Y-m-d h:i:sa");
-
-            if ($userID!='' && $totalProduct!='' && $productOrder!='' && $phone!='' && $address !='') {  
-                $productID = $productOrder[0]['productID'];  
+            $userID = $userID?$userID:$token['id'];
+            $productOrder = $productOrder?$productOrder:$this->post('productOrder', true);
+            $voucher = $voucher?$voucher:$this->post('voucher', true);
+            $voucherInfo = null;
+            if ($userID!='' && $productOrder!='') {  
+                // var_dump($productOrder);
+                $productID = $productOrder[0]->productID;  
                 $product = $this->Order_model->getProductByID($productID); // get product then get shop_id
                 $shopID = $product->user_id;
             
@@ -175,35 +138,39 @@ class Order extends RestController {
                     $voucherInfo = $this->handleVoucher_post(false, $shopID, $voucher);
                 }
                 $totalPrice = 0;
-                foreach ($productOrder as $key => $product) {
-                    $orderItem = array(
-                        'order_id' => $orderID,
-                        'product_id' => $product['productID'],
-                        'price' => $product['price'],
-                        'quantity' => $product['quantity'],
-                        'total_discount' => $voucherInfo?$voucherInfo->discount:0
-                    );  
-                    $productServer = $this->Order_model->getProductByID($product['productID']); // get product then get shop_id
+                $totalProduct = 0;
+                foreach ($productOrder as $key => $product) {                    
+                    $productServer = $this->Order_model->getProductByID($product->productID); // get product then get shop_id
                     $nowPrice = ($productServer->price - $productServer->price*$productServer->discount/100);
                     if ($voucherInfo) {
-                        $nowPrice = ($nowPrice - $nowPrice*$voucherInfo['discount']/100);
+                        $nowPrice = ($nowPrice - $nowPrice*$voucherInfo->discount/100);
                     }
-                    $totalPrice = $totalPrice + $nowPrice*$product['quantity'];
+                    $totalPrice = $totalPrice + $nowPrice*$product->quantity;
+                    $totalProduct = $product->quantity;
                 }   
-
                 $message = array(
                     'status' => true,
-                    'price'  => round($totalPrice,-2)
+                    'price'  => round($totalPrice,-2),
+                    'totalProduct' => $totalProduct,
+                    'voucherInfo' => $voucherInfo
                 );
-                $this->response($message, 200);         
+                if ($output) {
+                    $this->response($message, 200);         
+                } else {
+                    return $message;
+                }
             } else {
                 $message = array(
                     'status' => false,
-                    'message' => 'Error'
+                    'message' => 'Token not found'
                 );
-                $this->response($message, 404);
+                if ($output) {
+                    $this->response($message, 200);         
+                } else {
+                    return $message;
+                }
             }
-            // 296528
+            
         }       
     }
 

@@ -276,8 +276,8 @@ class User extends RestController {
 		$email = $this->put('email');
 		$phone = $this->put('phone');
         $address = $this->put('address');
-        $avatar = $this->put('avatar');
-    
+        $avatar = $this->put('avatar'); 
+        $fullName = $this->put('fullName');
         if ($phone) {                   
             $validatePhone = $this->validatePhone($phone);
             if ($validatePhone['status']===false) {
@@ -303,14 +303,14 @@ class User extends RestController {
             );
             $this->response($message,200);
         } else {
-            if ($email!='' || $phone!='' || $address!='' || $avatar) {
+            if ($email!='' || $phone!='' || $address!='' || $avatar || $fullName) {
                 if ($avatar) {
                     $avatar = str_replace('data:image/png;base64,', '', $avatar);
                     $avatar = str_replace(' ', '+', $avatar);
                     $data = base64_decode($avatar);
                     $imageName = md5(uniqid(rand(), true));     // random name image
                     $filename = $imageName . '.png';
-                    $filePath = 'uploads/users/' .  $imageName . '.jpg';
+                    $filePath = 'uploads/users/' .  $imageName . '.png';
                     $success = file_put_contents($filePath, $data);
                     if ($success) {
                         $avatar = $filePath;
@@ -323,7 +323,7 @@ class User extends RestController {
                         }
                     }
                 }
-                if ($this->User_model->updateUser($username, $email, $phone, $address, $avatar)) {
+                if ($this->User_model->updateUser($username, $fullName, $email, $phone, $address, $avatar)) {
                     $message = array(
                         'status' => true,
                         'message' => 'Cập nhật tài khoản thành công'
